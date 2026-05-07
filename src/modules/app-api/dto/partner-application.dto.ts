@@ -14,4 +14,12 @@ export class PartnerApplicationDto {
   @IsOptional()
   @IsString()
   contact?: string;
+
+  @IsOptional()
+  @IsString()
+  cover?: string;
+
+  @IsOptional()
+  @IsString()
+  voiceSample?: string;
 }

@@ -196,6 +196,7 @@
                 <button class="nav-item" data-view="clubs"><span class="nav-meta"><span class="nav-icon">🏠</span><span class="nav-name">俱乐部管理</span></span><span class="nav-tip" id="navTipClubs">-</span></button>
                 <button class="nav-item" data-view="faqs"><span class="nav-meta"><span class="nav-icon">❓</span><span class="nav-name">FAQ管理</span></span><span class="nav-tip" id="navTipFaqs">-</span></button>
                 <button class="nav-item" data-view="talents"><span class="nav-meta"><span class="nav-icon">⭐</span><span class="nav-name">陪玩 / 大神</span></span><span class="nav-tip" id="navTipTalents">-</span></button>
+                <button class="nav-item" data-view="partnerApps"><span class="nav-meta"><span class="nav-icon">📝</span><span class="nav-name">大神申请</span></span><span class="nav-tip" id="navTipPartnerApps">-</span></button>
                 <button class="nav-item" data-view="support"><span class="nav-meta"><span class="nav-icon">🎫</span><span class="nav-name">客服与退款</span></span><span class="nav-tip" id="navTipSupport">-</span></button>
                 <button class="nav-item" data-view="finance"><span class="nav-meta"><span class="nav-icon">💰</span><span class="nav-name">财务结算</span></span><span class="nav-tip" id="navTipFinance">-</span></button>
                 <button class="nav-item" data-view="permissions"><span class="nav-meta"><span class="nav-icon">🔐</span><span class="nav-name">角色权限</span></span><span class="nav-tip" id="navTipPerms">-</span></button>
@@ -309,6 +310,15 @@
                         <div class="section-actions" id="talentFilters"></div>
                     </div>
                     <div class="grid-3" id="talentsGrid"></div>
+                </section>
+
+                <!-- ====== Partner Applications ====== -->
+                <section class="view" id="partnerApps-view">
+                    <div class="section-header">
+                        <h3 class="section-title">大神申请审核</h3>
+                        <div class="section-actions" id="partnerAppFilters"></div>
+                    </div>
+                    <div class="table-shell"><table><thead><tr><th>ID</th><th>姓名</th><th>特长</th><th>联系方式</th><th>备注</th><th>状态</th><th>申请时间</th><th>操作</th></tr></thead><tbody id="partnerAppsTableBody"><tr><td colspan="8" style="text-align:center;color:var(--muted);">加载中<span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></td></tr></tbody></table></div>
                 </section>
 
                 <!-- ====== Support ====== -->
@@ -447,6 +457,7 @@
             clubs: { title:'俱乐部管理', intro:'俱乐部列表与状态管理' },
             faqs: { title:'FAQ管理', intro:'常见问题维护' },
             talents: { title:'陪玩 / 大神', intro:'接单效率、投诉复核与供给结构' },
+            partnerApps: { title:'大神申请', intro:'审核陪玩/大神入驻申请' },
             support: { title:'客服与退款', intro:'工单处理与退款审核' },
             finance: { title:'财务结算', intro:'收款、退款、分成与提现审核' },
             permissions: { title:'角色权限', intro:'角色与权限矩阵管理' }
@@ -589,7 +600,7 @@
             const loaders = {
                 dashboard: loadDashboard, users: loadUsers, orders: loadOrders,
                 services: loadServices, banners: loadBanners, clubs: loadClubs, faqs: loadFaqs,
-                talents: loadTalents, support: loadSupport,
+                talents: loadTalents, partnerApps: loadPartnerApps, support: loadSupport,
                 finance: loadFinance, permissions: loadPermissions
             };
             if (loaders[currentView]) loaders[currentView]();
@@ -986,6 +997,46 @@
                 await api(`/finance/withdrawals/${id}/review`, { method:'POST', body:JSON.stringify({ action, comment }) });
                 toast('提现已' + (action === 'approved' ? '通过' : '拒绝'));
                 loadFinance();
+            } catch (e) { toast('操作失败: ' + e.message); }
+        }
+
+        // ====== PARTNER APPLICATIONS ======
+        async function loadPartnerApps(keyword) {
+            try {
+                const params = new URLSearchParams(); params.set('pageSize','50');
+                if (keyword) params.set('keyword', keyword);
+                const data = await api('/partner-applications?' + params.toString());
+                document.getElementById('navTipPartnerApps').textContent = data.pagination.total + '条';
+                document.getElementById('partnerAppFilters').innerHTML = `
+                    <button class="action-chip" onclick="loadPartnerApps()">全部</button>
+                    <button class="action-chip" onclick="loadPartnerApps('pending')">待审核</button>
+                    <button class="action-chip" onclick="loadPartnerApps('interviewing')">面试中</button>
+                    <button class="action-chip" onclick="loadPartnerApps('approved')">已通过</button>
+                `;
+                document.getElementById('partnerAppsTableBody').innerHTML = data.list.map(a => `<tr>
+                    <td>${a.applicationId}</td>
+                    <td><strong>${a.name}</strong></td>
+                    <td>${a.specialty||''}</td>
+                    <td>${a.contact||''}</td>
+                    <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.note||''}</td>
+                    <td><span class="status-badge ${statusClass(a.status)}">${statusLabels[a.status]||a.status}</span></td>
+                    <td>${(a.createdAt||'').split('T')[0]}</td>
+                    <td>
+                        ${a.status === 'pending' ? `<button class="button sm primary" onclick="reviewApplication('${a.applicationId}','interviewing')">约面试</button><button class="button sm primary" onclick="reviewApplication('${a.applicationId}','approved')">通过</button><button class="button sm danger" onclick="reviewApplication('${a.applicationId}','rejected')">拒绝</button>` : ''}
+                        ${a.status === 'interviewing' ? `<button class="button sm primary" onclick="reviewApplication('${a.applicationId}','approved')">通过</button><button class="button sm danger" onclick="reviewApplication('${a.applicationId}','rejected')">拒绝</button>` : ''}
+                        ${a.status === 'approved' || a.status === 'rejected' ? `<span style="color:var(--muted);font-size:12px;">已处理</span>` : ''}
+                    </td>
+                </tr>`).join('');
+            } catch (e) { toast('加载申请列表失败: ' + e.message); }
+        }
+
+        async function reviewApplication(id, action) {
+            const comment = prompt('审核备注(可选):') || '';
+            const actionLabels = { interviewing:'约面试', approved:'通过', rejected:'拒绝' };
+            try {
+                await api(`/partner-applications/${id}/review`, { method:'POST', body:JSON.stringify({ action, comment }) });
+                toast('申请已' + (actionLabels[action]||action));
+                loadPartnerApps();
             } catch (e) { toast('操作失败: ' + e.message); }
         }
 
