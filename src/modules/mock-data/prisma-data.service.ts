@@ -652,6 +652,9 @@ export class PrismaDataService {
         amount: o.amount.toFixed(2),
         paymentMethod: o.paymentMethod,
         remark: o.remark,
+        operatorNote: o.operatorNote ?? null,
+        shippingCompany: o.shippingCompany ?? null,
+        trackingNo: o.trackingNo ?? null,
         createdAt: o.createdAt.toISOString(),
         paidAt: o.paidAt?.toISOString() ?? null,
         completedAt: o.completedAt?.toISOString() ?? null,
@@ -688,13 +691,25 @@ export class PrismaDataService {
       amount: order.amount.toFixed(2),
       paymentMethod: order.paymentMethod,
       remark: order.remark,
+      operatorNote: order.operatorNote ?? null,
+      shippingCompany: order.shippingCompany ?? null,
+      trackingNo: order.trackingNo ?? null,
       createdAt: order.createdAt.toISOString(),
       paidAt: order.paidAt?.toISOString() ?? null,
       completedAt: order.completedAt?.toISOString() ?? null,
       userId: order.userId,
       productId: order.productId,
       talentId: order.talentId,
-      talentName: order.talent?.name ?? null,
+      talent: order.talent
+        ? {
+            talentId: order.talent.id,
+            name: order.talent.name,
+            cover: order.talent.cover ?? '',
+            mobile: order.talent.mobile ?? '',
+            typeLabel: order.talent.typeLabel ?? '',
+            voiceStyle: order.talent.voiceStyle ?? '',
+          }
+        : null,
       statusTimeline: logs.map((log) => ({
         status: log.status,
         time: log.time.toISOString(),
@@ -1302,9 +1317,12 @@ export class PrismaDataService {
         ? { userId: order.user.id, nickname: order.user.nickname }
         : null,
       talent: order.talent
-        ? { talentId: order.talent.id, name: order.talent.name }
+        ? { talentId: order.talent.id, name: order.talent.name, cover: order.talent.cover ?? '', mobile: order.talent.mobile ?? '' }
         : null,
       remark: order.remark,
+      operatorNote: order.operatorNote ?? null,
+      shippingCompany: order.shippingCompany ?? null,
+      trackingNo: order.trackingNo ?? null,
       serviceTimeline: logs.map((log) => ({
         status: log.status,
         time: log.time.toISOString(),
@@ -1331,7 +1349,7 @@ export class PrismaDataService {
     await this.prisma.$transaction(async (tx) => {
       await tx.order.update({
         where: { id: order.id },
-        data: { talentId, status: 'assigned' },
+        data: { talentId, status: 'assigned', operatorNote: operatorNote ?? null },
       });
       await tx.orderStatusLog.create({
         data: { orderId: order.id, status: 'assigned', time: now },
@@ -1399,7 +1417,12 @@ export class PrismaDataService {
     const now = new Date();
     await this.prisma.order.update({
       where: { id: order.id },
-      data: { status: 'shipped' },
+      data: {
+        status: 'shipped',
+        shippingCompany: company,
+        trackingNo,
+        operatorNote: operatorNote ?? null,
+      },
     });
     await this.prisma.orderStatusLog.create({
       data: { orderId: order.id, status: 'shipped', time: now },

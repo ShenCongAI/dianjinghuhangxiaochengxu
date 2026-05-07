@@ -95,6 +95,9 @@ model Order {
   paymentMethod String?
   remark        String?
   scheduleAt    DateTime?
+  shippingCompany String?
+  trackingNo    String?
+  operatorNote  String?
   createdAt     DateTime @default(now())
   paidAt        DateTime?
   completedAt   DateTime?

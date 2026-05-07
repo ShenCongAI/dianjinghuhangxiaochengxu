@@ -908,18 +908,32 @@ const API_BASE = window.location.origin + '/api/v1/app';
                     title: '地铁护航 300W-1000W',
                     amount: '9.90',
                     status: '进行中',
+                    rawStatus: 'in_progress',
                     time: '今天 20:30',
                     tip: '技术手已接单，预计 6 分钟上线。',
-                    productId: 'subway-escort'
+                    productId: 'subway-escort',
+                    talentName: '大王电竞',
+                    talent: null,
+                    shippingCompany: '',
+                    trackingNo: '',
+                    operatorNote: '',
+                    statusTimeline: [],
                 },
                 {
                     no: 'DH24042112',
                     title: '人工服务-雪隼',
                     amount: '28.80',
                     status: '已完成',
+                    rawStatus: 'completed',
                     time: '04-21 18:10',
                     tip: '订单已完成，欢迎再次下单。',
-                    productId: 'snowfalcon'
+                    productId: 'snowfalcon',
+                    talentName: '',
+                    talent: null,
+                    shippingCompany: '',
+                    trackingNo: '',
+                    operatorNote: '',
+                    statusTimeline: [],
                 }
             ],
             gear: [
@@ -928,9 +942,16 @@ const API_BASE = window.location.origin + '/api/v1/app';
                     title: '装备专区 新手包',
                     amount: '19.90',
                     status: '待发货',
+                    rawStatus: 'pending_shipment',
                     time: '04-23 21:12',
                     tip: '仓库打包中，预计今晚发出。',
-                    productId: 'gear-starter'
+                    productId: 'gear-starter',
+                    talentName: '',
+                    talent: null,
+                    shippingCompany: '',
+                    trackingNo: '',
+                    operatorNote: '',
+                    statusTimeline: [],
                 }
             ]
         };
@@ -1383,17 +1404,24 @@ const API_BASE = window.location.origin + '/api/v1/app';
         async function loadRealOrders(type) {
             currentOrderType = type || 'escort';
             try {
-                const result = await requestAPI('/orders?pageSize=50');
+                const result = await requestAPI('/orders?pageSize=50&orderType=' + encodeURIComponent(currentOrderType));
                 if (result.data && result.data.list) {
                     orderData[currentOrderType] = result.data.list.map(o => ({
                         no: o.orderNo,
                         title: o.title,
                         amount: o.amount,
                         status: statusLabel2(o.status),
+                        rawStatus: o.status,
                         time: timeAgo2(o.createdAt),
                         tip: o.paymentMethod ? '已支付(' + (o.paymentMethod === 'wechat' ? '微信' : o.paymentMethod === 'alipay' ? '支付宝' : o.paymentMethod) + ')' : '',
                         productId: o.productId,
                         orderType: o.orderType,
+                        talentName: o.talentName || '',
+                        talent: o.talent || null,
+                        shippingCompany: o.shippingCompany || '',
+                        trackingNo: o.trackingNo || '',
+                        operatorNote: o.operatorNote || '',
+                        statusTimeline: o.statusTimeline || [],
                     }));
                     renderOrders();
                 }
@@ -1674,24 +1702,48 @@ const API_BASE = window.location.origin + '/api/v1/app';
             const orders = orderData[currentOrderType] || [];
             const container = document.getElementById('orders-list');
             if (!orders.length) {
-                container.innerHTML = '<div class="empty-state">暂无订单记录</div>';
+                container.innerHTML = '<div class="empty-state" style="text-align:center;padding:40px;color:#999;">暂无订单记录</div>';
                 return;
             }
+            const stColors = {
+                '待支付': { bg: '#FFF3E0', color: '#E65100' }, '待派单': { bg: '#E3F2FD', color: '#1565C0' },
+                '已接单': { bg: '#E8F5E9', color: '#2E7D32' }, '进行中': { bg: '#F3E5F5', color: '#7B1FA2' },
+                '已完成': { bg: '#E8F5E9', color: '#2E7D32' }, '待发货': { bg: '#FFF8E1', color: '#F57F17' },
+                '已发货': { bg: '#E0F7FA', color: '#00695C' }, '已取消': { bg: '#FAFAFA', color: '#757575' },
+            };
             container.innerHTML = orders.map(order => {
-                const stClass = (order.status === '已完成' || order.status === 'completed') ? 'order-status-done' : 'order-status';
+                const sc = stColors[order.status] || { bg: '#f0f0f0', color: '#666' };
+                const hasTalent = order.talentName || (order.talent && order.talent.name);
+                const talentEl = hasTalent
+                    ? `<div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13px;color:#FF9900;">
+                        <i class="fas fa-user-check"></i> <span>已指派: ${escHtml(order.talentName || (order.talent && order.talent.name))}</span>
+                       </div>`
+                    : '';
+                const trackingEl = order.trackingNo
+                    ? `<div style="font-size:12px;color:#666;margin-top:4px;">物流: ${escHtml(order.shippingCompany)} ${escHtml(order.trackingNo)}</div>`
+                    : '';
+                const progressEl = (order.rawStatus && order.rawStatus !== 'pending_payment' && order.rawStatus !== 'completed' && order.rawStatus !== 'canceled')
+                    ? `<div style="display:flex;gap:4px;margin-top:8px;">${['paid','assigned','shipped'].map(step => {
+                        const done = (step === 'paid') || (step === 'assigned' && ['assigned','in_progress','shipped','completed'].includes(order.rawStatus) || (step === 'shipped' && ['shipped','completed'].includes(order.rawStatus)));
+                        return `<div style="flex:1;height:4px;border-radius:2px;background:${done?'#FF9900':'#eee'};"></div>`;
+                    }).join('')}</div>`
+                    : '';
                 return `
                     <div class="order-card" onclick="viewOrderDetail('${escHtml(order.no)}')">
                         <div class="order-top">
                             <div>
                                 <div style="font-size:15px; font-weight:700; color:#333;">${escHtml(order.title)}</div>
-                                <div class="order-meta">订单号 ${escHtml(order.no)}</div>
+                                <div class="order-meta">订单号 ${escHtml(order.no)} · ${escHtml(order.time)}</div>
                             </div>
-                            <div class="${stClass}">${escHtml(order.status)}</div>
+                            <div style="background:${sc.bg};color:${sc.color};padding:4px 8px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;">${escHtml(order.status)}</div>
                         </div>
-                        <div style="font-size:14px; color:#666;">金额 ¥${escHtml(String(order.amount))}</div>
-                        <div class="order-meta">${escHtml(order.time)}</div>
-                        <div class="order-meta">${escHtml(order.tip)}</div>
-                        <div style="margin-top:14px;">${order.productId ? `<button class="btn btn-outline btn-compact" onclick="event.stopPropagation();reorder('${escHtml(order.productId)}')">再来一单</button>` : ''}</div>
+                        <div style="font-size:18px; font-weight:700; color:#FF6600; margin-top:6px;">¥${escHtml(String(order.amount))}</div>
+                        ${progressEl}
+                        ${talentEl}
+                        ${trackingEl}
+                        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+                            ${order.productId ? `<button class="btn btn-outline btn-compact" onclick="event.stopPropagation();reorder('${escHtml(order.productId)}')" style="flex:none;padding:6px 16px;font-size:12px;">再来一单</button>` : ''}
+                            ${order.rawStatus === 'pending_payment' ? `<button class="btn btn-outline btn-compact" onclick="event.stopPropagation();payPendingOrder('${escHtml(order.no)}')" style="flex:none;padding:6px 16px;font-size:12px;">去支付</button>` : ''}
                         </div>
                     </div>
                 `;
@@ -1700,6 +1752,7 @@ const API_BASE = window.location.origin + '/api/v1/app';
 
         function openOrders(type) {
             currentOrderType = type;
+            navigateTo('orders');
             setOrderTab(type);
             loadRealOrders(type);
         }
@@ -1708,6 +1761,17 @@ const API_BASE = window.location.origin + '/api/v1/app';
             currentOrderType = type;
             setOrderTab(type);
             loadRealOrders(type);
+        }
+
+        async function payPendingOrder(orderNo) {
+            if (!authToken) { showToast('请先登录'); return; }
+            try {
+                await payOrderAPI(orderNo, 'balance');
+                showToast('支付成功！');
+                loadRealOrders(currentOrderType);
+            } catch (e) {
+                showToast('支付失败: ' + e.message);
+            }
         }
 
         function reorder(productId) {
@@ -1725,22 +1789,81 @@ const API_BASE = window.location.origin + '/api/v1/app';
                 const stMap = { pending_payment: '待支付', pending_assign: '待派单', assigned: '已接单', in_progress: '进行中', completed: '已完成', pending_shipment: '待发货', shipped: '已发货', canceled: '已取消' };
                 const typeMap = { escort: '游戏陪玩', boost: '极速上分', coaching: '教学指导', gear: '装备交易', playmate: '专属陪玩' };
                 const pmMap = { wechat: '微信支付', alipay: '支付宝', balance: '余额支付' };
+                const currentStatus = stMap[o.status] || o.status;
+                const tl = o.statusTimeline || [];
+                const steps = o.orderType === 'gear'
+                    ? ['pending_payment', 'pending_shipment', 'shipped', 'completed']
+                    : ['pending_payment', 'pending_assign', 'assigned', 'in_progress', 'completed'];
+                const currentIdx = steps.indexOf(o.status);
+                const timelineHTML = `
+                    <div class="info-card" style="margin-top:15px;">
+                        <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:#333;">订单进度</div>
+                        <div style="display:flex;align-items:flex-start;gap:0;">
+                            ${steps.map((step, i) => {
+                                const done = i <= currentIdx;
+                                const active = i === currentIdx;
+                                const labels = { pending_payment: '下单', pending_assign: '派单', assigned: '接单', in_progress: '服务中', pending_shipment: '备货', shipped: '发货', completed: '完成' };
+                                const tlEntry = tl.find(l => l.status === step);
+                                const timeStr = tlEntry ? new Date(tlEntry.time).toLocaleString('zh-CN', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+                                return `
+                                <div style="flex:1;text-align:center;position:relative;">
+                                    <div style="width:14px;height:14px;border-radius:50%;background:${done?'#FF9900':'#ddd'};margin:0 auto 4px;${active?'box-shadow:0 0 0 4px rgba(255,153,0,0.2);':''}"></div>
+                                    ${i < steps.length - 1 ? `<div style="position:absolute;top:7px;left:50%;width:100%;height:2px;background:${i<currentIdx?'#FF9900':'#ddd'};"></div>` : ''}
+                                    <div style="font-size:10px;color:${done?'#FF9900':'#999'};font-weight:${active?'700':'400'};">${labels[step]||step}</div>
+                                    ${timeStr ? `<div style="font-size:9px;color:#999;">${timeStr}</div>` : ''}
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>`;
+                const talent = o.talent;
+                const talentHTML = talent ? `
+                    <div class="info-card" style="margin-top:15px;background:linear-gradient(135deg,#FFF8E1,#FFF3E0);border:1px solid #FFE0B2;">
+                        <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:#E65100;">对接大神</div>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <div style="width:50px;height:50px;border-radius:50%;background:${talent.cover?`url('${escHtml(talent.cover)}') center/cover`:'#FFE0B2'};border:2px solid #FF9900;"></div>
+                            <div style="flex:1;">
+                                <div style="font-size:15px;font-weight:700;color:#333;">${escHtml(talent.name)}</div>
+                                <div style="font-size:12px;color:#999;">${escHtml(talent.typeLabel || '大神')}</div>
+                                ${talent.mobile ? `<div style="font-size:13px;color:#FF6600;margin-top:2px;"><i class="fas fa-phone-alt"></i> ${escHtml(talent.mobile)}</div>` : ''}
+                            </div>
+                        </div>
+                        ${talent.mobile ? `<button class="btn primary" style="margin-top:10px;width:100%;" onclick="event.stopPropagation();showToast('已复制联系方式: ${escHtml(talent.mobile)}');navigator.clipboard?.writeText('${escHtml(talent.mobile)}')"><i class="fas fa-copy"></i> 复制联系方式</button>` : ''}
+                    </div>` : (o.talentId ? `<div class="info-card" style="margin-top:15px;text-align:center;color:#999;">已指派大神，加载中...</div>` : '');
+                const trackingHTML = o.shippingCompany || o.trackingNo ? `
+                    <div class="info-card" style="margin-top:15px;background:#E0F7FA;border:1px solid #B2EBF2;">
+                        <div style="font-size:14px;font-weight:700;margin-bottom:8px;color:#00695C;">物流信息</div>
+                        <div class="meta-text">快递公司: ${escHtml(o.shippingCompany || '-')}</div>
+                        <div class="meta-text">运单号: <strong style="color:#FF6600;">${escHtml(o.trackingNo || '-')}</strong></div>
+                    </div>` : '';
+                const opNoteHTML = o.operatorNote ? `
+                    <div class="info-card" style="margin-top:15px;background:#F5F5F5;">
+                        <div style="font-size:12px;color:#999;margin-bottom:4px;">管理员备注</div>
+                        <div style="font-size:13px;color:#555;">${escHtml(o.operatorNote)}</div>
+                    </div>` : '';
                 const detailHTML = `
                     <div class="nav-bar">
                         <i class="fas fa-arrow-left back-btn" onclick="goBack('orders')"></i>
                         <span class="title">订单详情</span>
                     </div>
                     <div class="info-card">
-                        <div style="font-size:18px; font-weight:700; margin-bottom:8px;">${escHtml(o.title || '订单')}</div>
+                        <div style="font-size:18px; font-weight:700; margin-bottom:4px;color:#333;">${escHtml(o.title || '订单')}</div>
                         <div style="color:#FF6600; font-size:28px; font-weight:700; margin-bottom:12px;">¥${escHtml(String(o.amount))}</div>
-                        <div class="meta-text">订单号: ${escHtml(o.orderNo)}</div>
+                        <div style="display:inline-block;background:#FFF3E0;color:#E65100;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:700;">${escHtml(currentStatus)}</div>
+                        <div class="meta-text" style="margin-top:10px;">订单号: ${escHtml(o.orderNo)}</div>
                         <div class="meta-text">类型: ${escHtml(typeMap[o.orderType] || o.orderType)}</div>
-                        <div class="meta-text">状态: ${escHtml(stMap[o.status] || o.status)}</div>
                         <div class="meta-text">支付方式: ${escHtml(pmMap[o.paymentMethod] || '未支付')}</div>
                         <div class="meta-text">创建时间: ${new Date(o.createdAt).toLocaleString()}</div>
                         ${o.paidAt ? `<div class="meta-text">支付时间: ${new Date(o.paidAt).toLocaleString()}</div>` : ''}
                         ${o.completedAt ? `<div class="meta-text">完成时间: ${new Date(o.completedAt).toLocaleString()}</div>` : ''}
                         ${o.remark ? `<div class="meta-text">备注: ${escHtml(o.remark)}</div>` : ''}
+                    </div>
+                    ${timelineHTML}
+                    ${talentHTML}
+                    ${trackingHTML}
+                    ${opNoteHTML}
+                    <div style="margin:15px;display:flex;gap:10px;">
+                        ${o.productId ? `<button class="btn primary" style="flex:1;" onclick="reorder('${escHtml(o.productId)}')">再来一单</button>` : ''}
+                        ${o.status === 'pending_payment' ? `<button class="btn primary" style="flex:1;" onclick="payPendingOrder('${escHtml(o.orderNo)}')">去支付</button>` : ''}
                     </div>
                 `;
                 const page = document.getElementById('orders-page');
@@ -1750,7 +1873,7 @@ const API_BASE = window.location.origin + '/api/v1/app';
                 page.classList.add('active');
                 currentPage = 'order-detail';
             } catch (e) {
-                showToast('加载订单详情失败');
+                showToast('加载订单详情失败: ' + e.message);
             }
         }
 
