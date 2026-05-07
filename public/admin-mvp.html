@@ -610,7 +610,7 @@
             if (e.key !== 'Enter') return;
             const kw = e.target.value.trim();
             if (!kw) { refreshCurrentView(); return; }
-            if (currentView === 'users') loadUsers(kw);
+            if (currentView === 'users') loadUsers();
             else if (currentView === 'orders') loadOrders(null, kw);
             else toast('在当前页面搜索: ' + kw);
         }
@@ -645,10 +645,12 @@
         }
 
         // ====== USERS ======
-        async function loadUsers(keyword) {
+        async function loadUsers(status) {
             try {
                 const params = new URLSearchParams(); params.set('pageSize','50');
-                if (keyword) params.set('keyword', keyword);
+                if (status) params.set('status', status);
+                const kw = document.getElementById('globalSearch')?.value.trim();
+                if (kw) params.set('keyword', kw);
                 const data = await api('/users?' + params.toString());
                 document.getElementById('userStats').innerHTML = `
                     <div class="card metric-card"><div class="metric-label">总用户数</div><div class="metric-value">${data.pagination.total}</div><div class="metric-note">全部注册用户</div></div>

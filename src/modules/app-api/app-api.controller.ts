@@ -2,6 +2,7 @@ import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -39,7 +40,7 @@ export class AppApiController {
 
   @Post('upload')
   async uploadFile(@Body() body: { file: string; filename: string }) {
-    if (!body.file || !body.filename) throw new Error('缺少文件数据');
+    if (!body.file || !body.filename) throw new BadRequestException('缺少文件数据');
     const base64Data = body.file.replace(/^data:image\/\w+;base64,/, '').replace(/^data:audio\/\w+;base64,/, '');
     const ext = body.filename.includes('.') ? body.filename.substring(body.filename.lastIndexOf('.')) : '.png';
     const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1e9) + ext;

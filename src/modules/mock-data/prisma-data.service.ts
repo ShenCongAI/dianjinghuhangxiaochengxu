@@ -1168,17 +1168,14 @@ export class PrismaDataService {
     });
 
     return {
-      user: {
-        userId: user.id,
-        nickname: user.nickname,
-        status: user.status,
-        registerAt: user.registerAt.toISOString(),
-      },
-      stats: {
-        orderCount: stats._count ?? 0,
-        totalSpend: stats._sum.amount?.toString() ?? '0.00',
-        refundCount,
-      },
+      userId: user.id,
+      nickname: user.nickname,
+      mobileMasked: user.mobile?.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') ?? '',
+      status: user.status,
+      registerAt: user.registerAt.toISOString(),
+      totalSpend: (stats._sum.amount ?? 0).toFixed(2),
+      orderCount: stats._count ?? 0,
+      refundCount,
       notes: notes.map((n) => ({
         operator: n.operator,
         content: n.content,
@@ -1452,7 +1449,8 @@ export class PrismaDataService {
   }
 
   async createService(payload: Record<string, unknown>) {
-    const title = (payload.title as string) ?? '未命名服务';
+    const title = (payload.title as string) ?? '';
+    if (!title.trim()) throw new BadRequestException('服务标题不能为空');
     const service = await this.prisma.product.create({
       data: {
         id: this.slugify(title),
@@ -1555,9 +1553,10 @@ export class PrismaDataService {
       completionRate: (talent.completionRate ?? 0).toFixed(1),
       avgResponseMinutes: (talent.avgResponseMinutes ?? 0).toFixed(1),
       todayOrders: talent.todayOrders,
-      pendingSettlementAmount: (talent.pendingSettlement ?? 0).toFixed(2),
+      pendingSettlement: (talent.pendingSettlement ?? 0).toFixed(2),
       complaints: talent.complaints,
       ordersCount: talent.ordersCount,
+      bio: talent.bio,
     };
   }
 
