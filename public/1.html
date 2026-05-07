@@ -1505,7 +1505,6 @@ const API_BASE = window.location.origin + '/api/v1/app';
                 console.warn('专区API加载失败，使用本地数据');
             }
             // 回退到本地数据
-            const section = sectionData[sectionKey];
             if (!section) return;
             document.getElementById('section-page-title').innerText = section.title;
             document.getElementById('section-hero-title').innerText = section.title;
