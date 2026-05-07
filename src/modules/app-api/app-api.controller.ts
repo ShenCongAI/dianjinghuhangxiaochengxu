@@ -1,3 +1,6 @@
+import { writeFile } from 'fs/promises';
+import { join } from 'path';
+
 import {
   Body,
   Controller,
@@ -32,6 +35,17 @@ export class AppApiController {
   @Post('auth/login')
   async login(@Body() body: { mobile?: string; password?: string }) {
     return ok(await this.dataService.loginUser(body.mobile ?? '', body.password ?? ''));
+  }
+
+  @Post('upload')
+  async uploadFile(@Body() body: { file: string; filename: string }) {
+    if (!body.file || !body.filename) throw new Error('缺少文件数据');
+    const base64Data = body.file.replace(/^data:image\/\w+;base64,/, '').replace(/^data:audio\/\w+;base64,/, '');
+    const ext = body.filename.includes('.') ? body.filename.substring(body.filename.lastIndexOf('.')) : '.png';
+    const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1e9) + ext;
+    const filePath = join(process.cwd(), 'uploads', uniqueName);
+    await writeFile(filePath, Buffer.from(base64Data, 'base64'));
+    return ok({ url: '/uploads/' + uniqueName });
   }
 
   // Bootstrap

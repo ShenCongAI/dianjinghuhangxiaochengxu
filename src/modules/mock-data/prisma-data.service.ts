@@ -754,7 +754,7 @@ export class PrismaDataService {
 
   async createPartnerApplication(
     userId: number,
-    payload: { name?: string; specialty?: string; note?: string; contact?: string },
+    payload: { name?: string; specialty?: string; note?: string; contact?: string; cover?: string; voiceSample?: string },
   ) {
     const app = await this.prisma.partnerApplication.create({
       data: {
@@ -762,6 +762,8 @@ export class PrismaDataService {
         specialty: payload.specialty ?? '',
         note: payload.note ?? '',
         contact: payload.contact ?? '',
+        cover: payload.cover ?? '',
+        voiceSample: payload.voiceSample ?? '',
         userId,
       },
     });
@@ -774,6 +776,8 @@ export class PrismaDataService {
       specialty: app.specialty,
       note: app.note,
       contact: app.contact,
+      cover: app.cover,
+      voiceSample: app.voiceSample,
       createdAt: app.createdAt.toISOString(),
     };
   }
@@ -1601,7 +1605,7 @@ export class PrismaDataService {
     if (action === 'approved') {
       await this.prisma.talent.upsert({
         where: { id: `talent-${app.id}` },
-        update: {},
+        update: { cover: app.cover ?? undefined, voiceStyle: app.voiceSample ?? undefined },
         create: {
           id: `talent-${app.id}`,
           name: app.name,
@@ -1613,6 +1617,8 @@ export class PrismaDataService {
           serviceLabel: app.specialty?.split('、')[0] ?? '陪玩',
           tagsJson: JSON.stringify([]),
           bio: app.note ?? '',
+          cover: app.cover ?? '',
+          voiceStyle: app.voiceSample ?? '',
         },
       });
     }

@@ -226,11 +226,11 @@
                 <!-- 公告 -->
                 <div class="notice-bar">
                     <i class="fas fa-bullhorn" style="margin-right: 8px;"></i>
-                    <marquee style="flex:1;">平台人员不会主动私信您，谨防被骗！未成年人禁止下单。</marquee>
+                    <marquee id="notice-text" style="flex:1;">平台人员不会主动私信您，谨防被骗！未成年人禁止下单。</marquee>
                 </div>
 
                 <!-- 金刚区 -->
-                <div class="grid-menu">
+                <div class="grid-menu" id="section-grid">
                     <div class="grid-item" onclick="openSection('subway')">
                         <i class="fas fa-subway"></i>
                         <span>地铁护航</span>
@@ -402,7 +402,7 @@
             </div>
 
             <div class="section-title">热门搜索</div>
-            <div class="chip-wrap">
+            <div class="chip-wrap" id="hot-keywords-wrap">
                 <div class="chip" onclick="fillSearch('地铁护航')">地铁护航</div>
                 <div class="chip" onclick="fillSearch('极速上分')">极速上分</div>
                 <div class="chip" onclick="fillSearch('雪隼')">雪隼</div>
@@ -568,6 +568,13 @@
                 <input id="partner-name" class="text-input" type="text" placeholder="输入你的昵称">
                 <label class="field-label" for="partner-game" style="margin-top:14px;">擅长项目</label>
                 <input id="partner-game" class="text-input" type="text" placeholder="例如：地铁护航、雪隼、语音陪玩">
+                <label class="field-label" style="margin-top:14px;">头像 / 封面</label>
+                <input id="partner-cover" type="file" accept="image/*" style="display:block;margin-top:8px;" onchange="previewPartnerCover(this)">
+                <img id="partner-cover-preview" style="display:none; width:100px; height:100px; object-fit:cover; border-radius:8px; margin-top:8px;">
+                <label class="field-label" style="margin-top:14px;">声音样本 (录音或语音介绍)</label>
+                <input id="partner-voice-file" type="file" accept="audio/*" style="display:block;margin-top:8px;" onchange="previewPartnerVoice(this)">
+                <input id="partner-voice-desc" class="text-input" type="text" placeholder="或描述你的嗓音风格：如青年音、御姐音、少年音" style="margin-top:8px;">
+                <audio id="partner-voice-preview" controls style="display:none; width:100%; margin-top:8px;"></audio>
                 <label class="field-label" for="partner-note" style="margin-top:14px;">补充说明</label>
                 <textarea id="partner-note" class="text-area" placeholder="可填写可接单时间、段位、风格等"></textarea>
             </div>
@@ -593,7 +600,7 @@
 
             <div class="soft-card">
                 <div style="font-size:16px; font-weight:700; color:#333; margin-bottom:8px;">在线客服</div>
-                <div class="meta-text">工作时间 09:00 - 02:00。紧急订单请备注“急单”，系统会优先派单。</div>
+                <div class="meta-text">工作时间 09:00 - 02:00。紧急订单请备注"急单"，系统会优先派单。</div>
                 <div class="quick-links">
                     <div class="quick-link" onclick="showToast('客服微信：kf9100-esports')">客服微信</div>
                     <div class="quick-link" onclick="showToast('客服电话：400-9100-777')">客服电话</div>
@@ -717,6 +724,14 @@ const API_BASE = window.location.origin + '/api/v1/app';
                 return result.data?.keywords || [];
             } catch (error) {
                 return ['地铁护航', '极速上分', '雪隼', '女神陪玩'];
+            }
+        }
+
+        async function loadHotKeywords() {
+            const keywords = await fetchHotKeywords();
+            const wrap = document.getElementById('hot-keywords-wrap');
+            if (wrap && keywords.length) {
+                wrap.innerHTML = keywords.map(k => `<div class="chip" onclick="fillSearch('${escHtml(k)}')">${escHtml(k)}</div>`).join('');
             }
         }
 
@@ -940,6 +955,7 @@ const API_BASE = window.location.origin + '/api/v1/app';
                     fetchClubs(),
                     fetchSupportFaqs(),
                 ]);
+                loadHotKeywords();
                 if (products.length) updateProductCatalog(products);
                 if (talentsData.length) updateTalents(talentsData);
                 if (clubsData.length) updateClubs(clubsData);
@@ -1001,6 +1017,8 @@ const API_BASE = window.location.origin + '/api/v1/app';
                 if (bootstrap) {
                     if (bootstrap.banners) updateBanners(bootstrap.banners);
                     if (bootstrap.hotProducts) updateHotProducts(bootstrap.hotProducts);
+                    if (bootstrap.sections) updateSections(bootstrap.sections);
+                    if (bootstrap.notice) document.getElementById('notice-text') && (document.getElementById('notice-text').innerText = bootstrap.notice);
                 }
                 if (products.length) updateProductCatalog(products);
                 if (talentsData.length) { updateTalents(talentsData); renderTalentList(); }
@@ -1021,6 +1039,20 @@ const API_BASE = window.location.origin + '/api/v1/app';
                 bannerEl.style.background = `url('${b.image}') center/cover no-repeat`;
             }
             bannerEl.innerHTML = `<div style="text-align:center;position:relative;z-index:1;text-shadow:0 1px 4px rgba(0,0,0,0.5);"><div style="font-size:18px;margin-bottom:5px;">${escHtml(b.title)}</div><div style="font-size:12px;opacity:0.9;font-weight:normal;">${escHtml(b.subtitle || '')}</div></div>`;
+        }
+
+        const SECTION_ICONS = { subway: 'fa-subway', gear: 'fa-box-open', boost: 'fa-rocket', more: 'fa-th-large' };
+
+        function updateSections(sections) {
+            const grid = document.getElementById('section-grid');
+            if (!grid || !sections.length) return;
+            grid.innerHTML = sections.map(s => {
+                const icon = SECTION_ICONS[s.key] || 'fa-th-large';
+                return `<div class="grid-item" onclick="openSection('${escHtml(s.key)}')">
+                    <i class="fas ${icon}"></i>
+                    <span>${escHtml(s.title)}</span>
+                </div>`;
+            }).join('');
         }
 
         function updateProductCatalog(products) {
@@ -1084,7 +1116,7 @@ const API_BASE = window.location.origin + '/api/v1/app';
                     service: t.serviceLabel || '',
                     tags: Array.isArray(t.tagsJson) ? t.tagsJson : (typeof t.tagsJson === 'string' ? JSON.parse(t.tagsJson) : (t.tags || [])),
                     bio: t.bio || '',
-                    img: 'f0f0f0',
+                    cover: t.cover || '',
                 };
             });
             talents = Object.values(talentMap);
@@ -1464,14 +1496,14 @@ const API_BASE = window.location.origin + '/api/v1/app';
             }
 
             if (talentResults.length) {
-                html += '<div class=”section-title”>相关大神</div>';
+                html += '<div class="section-title">相关大神</div>';
                 html += talentResults.slice(0, 4).map(talent => {
-                    return `<div class=”club-card” onclick=”openTalentDetail('${escHtml(talent.id)}')”><div class=”club-head”><div><div class=”club-title”>${escHtml(talent.name)}</div><div class=”meta-text”>${escHtml(talent.type)} · ${escHtml(talent.voice)} · ${escHtml(talent.service)}</div></div><div style=”color:#FF4444; font-weight:700;”>¥${escHtml(String(talent.price))}</div></div><div class=”club-desc”>${escHtml(talent.bio)}</div><div class=”club-meta”><span>评分 ${escHtml(String(talent.score))}</span><span>订单 ${escHtml(String(talent.orders))}</span></div></div>`;
+                    return `<div class="club-card" onclick="openTalentDetail('${escHtml(talent.id)}')"><div class="club-head"><div><div class="club-title">${escHtml(talent.name)}</div><div class="meta-text">${escHtml(talent.type)} · ${escHtml(talent.voice)} · ${escHtml(talent.service)}</div></div><div style="color:#FF4444; font-weight:700;">¥${escHtml(String(talent.price))}</div></div><div class="club-desc">${escHtml(talent.bio)}</div><div class="club-meta"><span>评分 ${escHtml(String(talent.score))}</span><span>订单 ${escHtml(String(talent.orders))}</span></div></div>`;
                 }).join('');
             }
 
             if (!productResults.length && !talentResults.length) {
-                html = `<div class=”empty-state”>没有找到和 “${term}” 相关的结果，换个关键词试试。</div>`;
+                html = `<div class="empty-state">没有找到和 "${term}" 相关的结果，换个关键词试试。</div>`;
             }
 
             container.innerHTML = html;
@@ -1531,14 +1563,26 @@ const API_BASE = window.location.origin + '/api/v1/app';
             }
 
             container.innerHTML = visibleTalents.map(talent => {
+                const imgSrc = talent.cover
+                    ? `url('${escHtml(talent.cover)}')`
+                    : '';
+                const imgStyle = talent.cover
+                    ? `style="background: url('${escHtml(talent.cover)}') center/cover no-repeat; width: 100%; height: 150px; border-radius: 10px 10px 0 0;"`
+                    : `class="talent-img"`;
+                const imgTag = talent.cover
+                    ? `<div ${imgStyle}></div>`
+                    : `<img src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27300%27 height=%27200%27%3E%3Crect fill=%27%23e8edf2%27 width=%27300%27 height=%27200%27/%3E%3Ctext x=%27150%27 y=%27110%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-size=%2718%27 fill=%27%2396a8c0%27%3E9100%3C/text%3E%3C/svg%3E" class="talent-img" alt="${escHtml(talent.name)}">`;
+                const voiceBtn = talent.voice
+                    ? `<div class="voice-btn" onclick="event.stopPropagation();showToast('嗓音: ${escHtml(talent.voice)}')"><i class="fas fa-volume-up"></i></div>`
+                    : '';
                 return `
                     <div class="talent-card" onclick="openTalentDetail('${escHtml(talent.id)}')">
-                        <img src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27300%27 height=%27200%27%3E%3Crect fill=%27%23e8edf2%27 width=%27300%27 height=%27200%27/%3E%3Ctext x=%27150%27 y=%27110%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-size=%2718%27 fill=%27%2396a8c0%27%3E9100%3C/text%3E%3C/svg%3E" class="talent-img" alt="${escHtml(talent.name)}">
+                        ${imgTag}
                         <div class="talent-info">
                             <div class="talent-name">${escHtml(talent.name)}</div>
                             <div class="product-tags">${escHtml(talent.type)} · ¥${escHtml(String(talent.price))} · ${escHtml(talent.service)}</div>
                         </div>
-                        <div class="voice-btn"><i class="fas fa-volume-up"></i></div>
+                        ${voiceBtn}
                     </div>
                 `;
             }).join('');
@@ -1557,9 +1601,9 @@ const API_BASE = window.location.origin + '/api/v1/app';
             const talent = talents.find(item => item.id === talentId);
             if (!talent) return;
             currentTalent = talent;
-            document.getElementById('talent-detail-image').src = 'data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27300%27%20height=%27200%27%3E%3Crect%20fill=%27%23e8edf2%27%20width=%27300%27%20height=%27200%27/%3E%3Ctext%20x=%27150%27%20y=%27110%27%20text-anchor=%27middle%27%20font-family=%27sans-serif%27%20font-size=%2718%27%20fill=%27%2396a8c0%27%3E9100%3C/text%3E%3C/svg%3E';
+            document.getElementById('talent-detail-image').src = talent.cover || 'data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27300%27%20height=%27200%27%3E%3Crect%20fill=%27%23e8edf2%27%20width=%27300%27%20height=%27200%27/%3E%3Ctext%20x=%27150%27%20y=%27110%27%20text-anchor=%27middle%27%20font-family=%27sans-serif%27%20font-size=%2718%27%20fill=%27%2396a8c0%27%3E9100%3C/text%3E%3C/svg%3E';
             document.getElementById('talent-detail-name').innerText = talent.name;
-            document.getElementById('talent-detail-meta').innerText = `${talent.type} · ${talent.voice} · ${talent.service}`;
+            document.getElementById('talent-detail-meta').innerHTML = `${escHtml(talent.type)} · <span style="color:#FF9900;cursor:pointer" onclick="event.stopPropagation();showToast('嗓音: ${escHtml(talent.voice || '暂无')}')"><i class="fas fa-volume-up"></i> ${escHtml(talent.voice || '暂无')}</span> · ${escHtml(talent.service)}`;
             document.getElementById('talent-detail-tags').innerHTML = talent.tags.map(tag => `<span class="tag-pill">${escHtml(tag)}</span>`).join('');
             document.getElementById('talent-score').innerText = talent.score;
             document.getElementById('talent-orders').innerText = talent.orders;
@@ -1710,15 +1754,73 @@ const API_BASE = window.location.origin + '/api/v1/app';
             navigateTo('partner');
         }
 
-        function submitPartnerApplication() {
+        function previewPartnerCover(input) {
+            const file = input.files?.[0];
+            const preview = document.getElementById('partner-cover-preview');
+            if (file) { preview.src = URL.createObjectURL(file); preview.style.display = 'block'; }
+        }
+
+        function previewPartnerVoice(input) {
+            const file = input.files?.[0];
+            const preview = document.getElementById('partner-voice-preview');
+            if (file) { preview.src = URL.createObjectURL(file); preview.style.display = 'block'; }
+        }
+
+        async function uploadFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async () => {
+                    try {
+                        const result = await requestAPI('/upload', {
+                            method: 'POST',
+                            body: JSON.stringify({ file: reader.result, filename: file.name })
+                        });
+                        resolve(result.data?.url || '');
+                    } catch (e) { reject(e); }
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function submitPartnerApplication() {
             const name = document.getElementById('partner-name').value.trim();
             const game = document.getElementById('partner-game').value.trim();
+            const note = document.getElementById('partner-note').value.trim();
+            const voiceDesc = document.getElementById('partner-voice-desc').value.trim();
             if (!name || !game) {
                 showToast('请先填写昵称和擅长项目');
                 return;
             }
-            showToast('报名信息已提交，客服会尽快联系你');
-            document.getElementById('partner-note').value = '';
+            try {
+                showToast('正在上传...');
+                // Upload cover image if selected
+                let coverUrl = '';
+                const coverFile = document.getElementById('partner-cover').files?.[0];
+                if (coverFile) { coverUrl = await uploadFile(coverFile); }
+
+                // Upload voice sample if selected
+                let voiceUrl = '';
+                const voiceFile = document.getElementById('partner-voice-file').files?.[0];
+                if (voiceFile) { voiceUrl = await uploadFile(voiceFile); }
+
+                const voiceData = voiceUrl || voiceDesc;
+
+                showToast('正在提交...');
+                await requestAPI('/partner-applications', {
+                    method: 'POST',
+                    body: JSON.stringify({ name, specialty: game, note, cover: coverUrl, voiceSample: voiceData })
+                });
+                showToast('报名信息已提交，客服会尽快联系你');
+                document.getElementById('partner-note').value = '';
+                document.getElementById('partner-voice-desc').value = '';
+                document.getElementById('partner-cover').value = '';
+                document.getElementById('partner-voice-file').value = '';
+                document.getElementById('partner-cover-preview').style.display = 'none';
+                document.getElementById('partner-voice-preview').style.display = 'none';
+            } catch (e) {
+                showToast('提交失败: ' + (e.message || '网络异常'));
+            }
         }
 
         function openSupport() {
@@ -1741,14 +1843,27 @@ const API_BASE = window.location.origin + '/api/v1/app';
             navigateTo('business');
         }
 
-        function submitBusinessForm() {
+        async function submitBusinessForm() {
             const company = document.getElementById('business-company').value.trim();
             const contact = document.getElementById('business-contact').value.trim();
+            const note = document.getElementById('business-note').value.trim();
             if (!company || !contact) {
                 showToast('请先填写公司名称和联系方式');
                 return;
             }
-            showToast('合作意向已提交，商务会尽快联系你');
+            try {
+                showToast('正在提交...');
+                await requestAPI('/business-leads', {
+                    method: 'POST',
+                    body: JSON.stringify({ companyName: company, contact, note })
+                });
+                showToast('合作意向已提交，商务会尽快联系你');
+                document.getElementById('business-company').value = '';
+                document.getElementById('business-contact').value = '';
+                document.getElementById('business-note').value = '';
+            } catch (e) {
+                showToast('提交失败: ' + (e.message || '网络异常'));
+            }
         }
 
         function escHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
