@@ -105,13 +105,13 @@
         .tab-item.active { color: #FF9900; }
 
         /* --- 5.5 详情页 --- */
-        #detail-page { z-index: 150; padding-bottom: 96px; }
+        #detail-page { z-index: 150; padding-bottom: 0; }
         .detail-hero { padding: 20px; text-align: center; }
-        .detail-description { background: #fff; padding: 20px; margin-top: 10px; font-size: 14px; color: #555; line-height: 1.6; }
+        .detail-description { background: #fff; padding: 20px; margin-top: 10px; font-size: 14px; color: #555; line-height: 1.6; padding-bottom: 20px; }
         .detail-tagline { font-size: 12px; color: #999; margin-top: 8px; }
-        .detail-footer { position: absolute; left: 0; right: 0; bottom: 0; background: #fff; padding: 10px 20px 18px; border-top: 1px solid #eee; z-index: 20; }
+        .detail-footer { position: sticky; bottom: 0; background: #fff; padding: 10px 20px max(18px, env(safe-area-inset-bottom, 0px)); border-top: 1px solid #eee; z-index: 20; }
         .detail-footer .btn { width: 100%; margin: 0; }
-        #talent-detail-page, #checkout-page { z-index: 160; padding-bottom: 96px; }
+        #talent-detail-page, #checkout-page { z-index: 160; padding-bottom: 0; }
         .page-pad { padding: 15px; }
         .soft-card { background: #fff; margin: 0 15px 15px; padding: 16px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .search-box { background: #fff; padding: 15px; border-bottom: 1px solid #f0f0f0; }

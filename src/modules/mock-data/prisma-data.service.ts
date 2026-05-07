@@ -1472,6 +1472,8 @@ export class PrismaDataService {
         badge: p.badge,
         cover: p.cover,
         status: p.status,
+        intro: p.introJson ? JSON.parse(p.introJson) : [],
+        notice: p.noticeJson ? JSON.parse(p.noticeJson) : [],
       })),
       pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
     };
@@ -1480,9 +1482,10 @@ export class PrismaDataService {
   async createService(payload: Record<string, unknown>) {
     const title = (payload.title as string) ?? '';
     if (!title.trim()) throw new BadRequestException('服务标题不能为空');
+    const id = (payload.id as string)?.trim() || this.slugify(title);
     const service = await this.prisma.product.create({
       data: {
-        id: this.slugify(title),
+        id,
         title,
         category: (payload.category as string) ?? 'more',
         orderType: ((payload.orderType ?? payload.type) as OrderType) ?? 'escort',

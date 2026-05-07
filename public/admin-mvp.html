@@ -379,6 +379,8 @@
                 </div>
                 <input id="svcCover" placeholder="或手动输入图片URL">
             </div>
+            <div class="field"><label>服务介绍（每行一条）</label><textarea id="svcIntro" rows="3" placeholder="纯手工上分，效率保障。&#10;全程直播或截图反馈。"></textarea></div>
+            <div class="field"><label>注意事项（每行一条）</label><textarea id="svcNotice" rows="3" placeholder="请勿在游戏内乱说话。&#10;禁止顶号。"></textarea></div>
             <div class="btn-row">
                 <button class="button soft" onclick="closeServiceModal()">取消</button>
                 <button class="button primary" onclick="saveService()">保存</button>
@@ -853,6 +855,8 @@
             document.getElementById('svcTag').value = service ? (service.tag||'') : '';
             document.getElementById('svcBadge').value = service ? (service.badge||'') : '';
             document.getElementById('svcCover').value = service ? (service.cover||'') : '';
+            document.getElementById('svcIntro').value = service ? (Array.isArray(service.intro) ? service.intro.join('\n') : (service.intro||'')) : '';
+            document.getElementById('svcNotice').value = service ? (Array.isArray(service.notice) ? service.notice.join('\n') : (service.notice||'')) : '';
             // Reset upload
             const fileInput = document.getElementById('svcFileInput');
             fileInput.value = ''; fileInput.dataset.uploaded = '';
@@ -874,6 +878,8 @@
             const coverUrl = uploadedUrl || manualUrl;
             const rawPrice = document.getElementById('svcPrice').value.trim();
             const priceVal = rawPrice === '' ? 0 : (parseFloat(rawPrice) || 0);
+            const introText = document.getElementById('svcIntro').value.trim();
+            const noticeText = document.getElementById('svcNotice').value.trim();
             const body = {
                 id: document.getElementById('svcId').value,
                 title: document.getElementById('svcTitle').value,
@@ -883,6 +889,8 @@
                 tag: document.getElementById('svcTag').value,
                 badge: document.getElementById('svcBadge').value,
                 cover: coverUrl,
+                intro: introText ? introText.split('\n').filter(l => l.trim()) : [],
+                notice: noticeText ? noticeText.split('\n').filter(l => l.trim()) : [],
                 status: 'online'
             };
             const isEdit = document.getElementById('svcId').disabled;
@@ -900,9 +908,10 @@
 
         async function editService(id) {
             try {
-                const data = await api('/services');
+                const data = await api('/services?pageSize=200');
                 const svc = data.list.find(s => (s.serviceId||s.productId) === id);
                 if (svc) openServiceModal(svc);
+                else toast('未找到该服务');
             } catch (e) { toast('获取服务详情失败'); }
         }
 
