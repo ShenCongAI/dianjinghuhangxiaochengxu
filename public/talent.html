@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>9100 打手端</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+    --primary: #FF6B35;
+    --primary-light: #FFF0E8;
+    --bg: #f5f6f8;
+    --card: #fff;
+    --text: #1a1a2e;
+    --muted: #8e8e93;
+    --border: #eee;
+    --success: #34C759;
+    --danger: #FF3B30;
+    --warning: #FF9500;
+    --shadow: 0 2px 12px rgba(0,0,0,0.06);
+    --radius: 14px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: calc(60px + var(--safe-bottom)); }
+
+/* Login */
+#login-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:24px; background: linear-gradient(135deg, #FF6B35, #FF8C42); }
+#login-screen .logo { font-size: 64px; margin-bottom: 16px; }
+#login-screen h1 { color: #fff; font-size: 22px; margin-bottom: 8px; }
+#login-screen .sub { color: rgba(255,255,255,0.8); font-size: 13px; margin-bottom: 32px; }
+#login-screen .card { background: #fff; border-radius: var(--radius); padding: 24px; width: 100%; max-width: 360px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); }
+#login-screen label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
+#login-screen input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 15px; margin-bottom: 16px; background: #fff; outline: none; }
+#login-screen input:focus { border-color: var(--primary); }
+#login-screen .btn { width: 100%; padding: 14px; background: var(--primary); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
+#login-screen .btn:active { opacity: 0.8; }
+#login-screen .btn:disabled { opacity: 0.5; }
+#login-screen .hint { font-size: 11px; color: var(--muted); text-align: center; margin-top: 12px; }
+
+/* Header */
+.header { position: sticky; top: 0; background: var(--primary); color: #fff; padding: 14px 16px; z-index: 10; display: flex; align-items: center; justify-content: space-between; }
+.header h2 { font-size: 17px; }
+.header .logout { font-size: 13px; opacity: 0.8; cursor: pointer; }
+
+/* Tabs */
+.tabs { display: flex; background: var(--card); border-bottom: 1px solid var(--border); position: sticky; top: 48px; z-index: 9; }
+.tab { flex: 1; text-align: center; padding: 12px 0; font-size: 14px; color: var(--muted); cursor: pointer; position: relative; font-weight: 500; }
+.tab.active { color: var(--primary); font-weight: 600; }
+.tab.active::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 24px; height: 3px; background: var(--primary); border-radius: 2px; }
+
+/* Stats bar */
+.stats-bar { display: flex; padding: 16px; gap: 10px; }
+.stat-card { flex: 1; background: var(--card); border-radius: var(--radius); padding: 14px 12px; text-align: center; box-shadow: var(--shadow); }
+.stat-card .val { font-size: 22px; font-weight: 700; color: var(--primary); }
+.stat-card .lbl { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* Order cards */
+.order-list { padding: 0 16px 16px; }
+.order-card { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); cursor: pointer; transition: 0.15s; }
+.order-card:active { transform: scale(0.98); }
+.order-card .top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.order-card .title { font-size: 15px; font-weight: 600; }
+.order-card .price { font-size: 18px; font-weight: 700; color: var(--primary); white-space: nowrap; }
+.order-card .meta { font-size: 12px; color: var(--muted); display: flex; gap: 12px; margin-bottom: 6px; }
+.order-card .remark { font-size: 12px; color: #999; background: #f8f8f8; padding: 8px 10px; border-radius: 8px; margin-bottom: 10px; }
+.order-card .btns { display: flex; gap: 8px; justify-content: flex-end; }
+.order-card .remark:empty { display: none; }
+
+.btn-sm { padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; }
+.btn-sm:active { opacity: 0.8; }
+.btn-grab { background: var(--primary); color: #fff; }
+.btn-done { background: var(--success); color: #fff; }
+.btn-outline { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+
+/* Status badges */
+.status-tag { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.status-pending_assign { background: #FFF3CD; color: #856404; }
+.status-assigned { background: #D4EDFF; color: #004085; }
+.status-in_progress { background: #D4EDFF; color: #004085; }
+.status-completed { background: #D4EDDA; color: #155724; }
+.status-canceled { background: #F8D7DA; color: #721C24; }
+
+/* Filter chips */
+.filter-row { display: flex; padding: 10px 16px; gap: 8px; overflow-x: auto; }
+.filter-chip { padding: 6px 14px; border-radius: 16px; font-size: 12px; border: 1px solid var(--border); background: #fff; white-space: nowrap; cursor: pointer; }
+.filter-chip.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+
+/* Profile */
+.profile-card { margin: 16px; background: var(--card); border-radius: var(--radius); padding: 24px; text-align: center; box-shadow: var(--shadow); }
+.profile-card .avatar { width: 72px; height: 72px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 28px; line-height: 72px; margin: 0 auto 12px; font-weight: 700; }
+.profile-card .name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.profile-card .type { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+.profile-card .score { display: inline-block; padding: 4px 12px; background: var(--primary-light); color: var(--primary); border-radius: 12px; font-size: 13px; font-weight: 600; }
+
+/* Toast */
+#toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #fff; padding: 10px 24px; border-radius: 20px; font-size: 13px; z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+#toast.show { opacity: 1; }
+
+/* Empty state */
+.empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+.empty .icon { font-size: 48px; margin-bottom: 12px; }
+.empty p { font-size: 14px; }
+
+/* Loading */
+.loading { text-align: center; padding: 30px; color: var(--muted); font-size: 13px; }
+
+/* Detail modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: flex; align-items: flex-end; justify-content: center; }
+.modal-overlay .modal { background: #fff; border-radius: 16px 16px 0 0; width: 100%; max-height: 80vh; overflow-y: auto; padding: 20px; animation: slideUp 0.25s; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal .close { float: right; font-size: 20px; cursor: pointer; line-height: 1; opacity: 0.5; }
+.modal h3 { font-size: 17px; margin-bottom: 16px; }
+.modal .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.modal .info-row .k { color: var(--muted); }
+.modal .info-row .v { font-weight: 500; }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- Login Screen -->
+<div id="login-screen">
+    <div class="logo">🎮</div>
+    <h1>9100 打手端</h1>
+    <p class="sub">接单大厅 · 轻松赚钱</p>
+    <div class="card">
+        <label>手机号</label>
+        <input type="tel" id="loginMobile" placeholder="请输入手机号" maxlength="11" autocomplete="tel">
+        <label>密码</label>
+        <input type="password" id="loginPassword" placeholder="请输入密码" autocomplete="current-password">
+        <button class="btn" id="loginBtn" onclick="doLogin()">登录</button>
+        <p class="hint">请使用您的注册手机号登录</p>
+    </div>
+</div>
+
+<!-- Main Screen -->
+<div id="main-screen" style="display:none;">
+    <div class="header">
+        <h2 id="headerTitle">接单大厅</h2>
+        <span class="logout" onclick="doLogout()">切换账号</span>
+    </div>
+    <div class="tabs">
+        <div class="tab active" data-tab="lobby" onclick="switchTab('lobby')">接单大厅</div>
+        <div class="tab" data-tab="orders" onclick="switchTab('orders')">我的接单</div>
+        <div class="tab" data-tab="profile" onclick="switchTab('profile')">我的</div>
+    </div>
+
+    <!-- Lobby -->
+    <div id="tab-lobby">
+        <div class="stats-bar" id="lobbyStats"></div>
+        <div class="filter-row" id="lobbyFilters"></div>
+        <div class="order-list" id="lobbyList"></div>
+    </div>
+
+    <!-- My Orders -->
+    <div id="tab-orders" style="display:none;">
+        <div class="filter-row" id="myOrderFilters"></div>
+        <div class="order-list" id="myOrderList"></div>
+    </div>
+
+    <!-- Profile -->
+    <div id="tab-profile" style="display:none;">
+        <div id="profileContent"></div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detailModal" style="display:none;" onclick="if(event.target===this)closeDetail()">
+    <div class="modal" id="detailContent"></div>
+</div>
+
+<script>
+const API = window.location.origin + '/api/v1/app';
+let talentId = '';
+let talentName = '';
+let talentToken = '';
+
+// ---- Toast ----
+let toastTimer;
+function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ---- API ----
+async function api(url, opts = {}) {
+    const h = { 'Content-Type': 'application/json', ...opts.headers };
+    if (talentToken) h['Authorization'] = 'Bearer ' + talentToken;
+    const res = await fetch(url, { ...opts, headers: h });
+    const data = await res.json();
+    if (data.code !== 0) throw new Error(data.message || '请求失败');
+    return data.data;
+}
+
+// ---- Login ----
+async function doLogin() {
+    const mobile = document.getElementById('loginMobile').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    if (!mobile) { toast('请输入手机号'); return; }
+    if (!password) { toast('请输入密码'); return; }
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    btn.innerText = '登录中...';
+    try {
+        const data = await api(API + '/talent-auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ mobile, password })
+        });
+        talentToken = data.token;
+        talentId = data.profile.talentId;
+        talentName = data.profile.name;
+        sessionStorage.setItem('talentToken', talentToken);
+        sessionStorage.setItem('talentProfile', JSON.stringify(data.profile));
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('main-screen').style.display = 'block';
+        loadLobby();
+    } catch (e) {
+        toast('登录失败: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = '登录';
+    }
+}
+
+function doLogout() {
+    talentId = '';
+    talentName = '';
+    talentToken = '';
+    sessionStorage.removeItem('talentToken');
+    sessionStorage.removeItem('talentProfile');
+    document.getElementById('main-screen').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('loginMobile').value = '';
+    document.getElementById('loginPassword').value = '';
+}
+
+// Auto login
+(function() {
+    const tok = sessionStorage.getItem('talentToken');
+    const prof = sessionStorage.getItem('talentProfile');
+    if (tok && prof) {
+        try {
+            const p = JSON.parse(prof);
+            talentToken = tok;
+            talentId = p.talentId;
+            talentName = p.name;
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-screen').style.display = 'block';
+            loadLobby();
+        } catch (_) {}
+    }
+})();
+
+// ---- Tab Switch ----
+function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+    document.getElementById('tab-lobby').style.display = tab === 'lobby' ? 'block' : 'none';
+    document.getElementById('tab-orders').style.display = tab === 'orders' ? 'block' : 'none';
+    document.getElementById('tab-profile').style.display = tab === 'profile' ? 'block' : 'none';
+    document.getElementById('headerTitle').textContent = tab === 'lobby' ? '接单大厅' : tab === 'orders' ? '我的接单' : '我的';
+    if (tab === 'lobby') loadLobby();
+    if (tab === 'orders') loadMyOrders();
+    if (tab === 'profile') loadProfile();
+}
+
+// ---- Lobby ----
+async function loadLobby(type) {
+    try {
+        let url = API + '/order-pool?pageSize=50';
+        if (type) url += '&orderType=' + type;
+        const data = await api(url);
+        document.getElementById('lobbyStats').innerHTML = `
+            <div class="stat-card"><div class="val">${data.pagination.total}</div><div class="lbl">可接订单</div></div>
+            <div class="stat-card"><div class="val" style="color:var(--success);">${talentName}</div><div class="lbl">当前打手</div></div>
+        `;
+        document.getElementById('lobbyFilters').innerHTML = `
+            <div class="filter-chip ${!type?'active':''}" onclick="loadLobby()">全部</div>
+            <div class="filter-chip ${type==='escort'?'active':''}" onclick="loadLobby('escort')">陪玩</div>
+            <div class="filter-chip ${type==='boost'?'active':''}" onclick="loadLobby('boost')">上分</div>
+            <div class="filter-chip ${type==='coaching'?'active':''}" onclick="loadLobby('coaching')">教学</div>
+        `;
+        if (!data.list.length) {
+            document.getElementById('lobbyList').innerHTML = '<div class="empty"><div class="icon">📋</div><p>暂无可接订单</p></div>';
+        } else {
+            document.getElementById('lobbyList').innerHTML = data.list.map(o => `
+                <div class="order-card" onclick="showOrderDetail('${o.orderNo}')">
+                    <div class="top">
+                        <span class="title">${escHtml(o.title)}</span>
+                        <span class="price">¥${o.amount}</span>
+                    </div>
+                    <div class="meta">
+                        <span>${o.userNickname || '匿名用户'}</span>
+                        <span>${typeLabel(o.orderType)}</span>
+                        <span>${timeAgo(o.createdAt)}</span>
+                    </div>
+                    ${o.remark ? `<div class="remark">备注: ${escHtml(o.remark)}</div>` : ''}
+                    <div class="btns">
+                        <button class="btn-sm btn-grab" onclick="event.stopPropagation();grabOrder('${o.orderNo}')">抢单</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (e) {
+        document.getElementById('lobbyList').innerHTML = '<div class="empty"><p>加载失败: ' + e.message + '</p></div>';
+    }
+}
+
+async function grabOrder(orderNo) {
+    if (!talentToken) { toast('请先登录'); return; }
+    try {
+        await api(API + '/order-pool/' + orderNo + '/grab', {
+            method: 'POST',
+        });
+        toast('抢单成功！');
+        loadLobby();
+    } catch (e) {
+        toast('抢单失败: ' + e.message);
+    }
+}
+
+// ---- My Orders ----
+let myOrderStatus = '';
+async function loadMyOrders(status) {
+    myOrderStatus = status || '';
+    try {
+        let url = API + '/talents/' + talentId + '/orders?pageSize=50';
+        if (myOrderStatus) url += '&status=' + myOrderStatus;
+        const data = await api(url);
+        document.getElementById('myOrderFilters').innerHTML = `
+            <div class="filter-chip ${!myOrderStatus?'active':''}" onclick="loadMyOrders()">全部</div>
+            <div class="filter-chip ${myOrderStatus==='assigned'?'active':''}" onclick="loadMyOrders('assigned')">进行中</div>
+            <div class="filter-chip ${myOrderStatus==='completed'?'active':''}" onclick="loadMyOrders('completed')">已完成</div>
+        `;
+        if (!data.list.length) {
+            document.getElementById('myOrderList').innerHTML = '<div class="empty"><div class="icon">📭</div><p>暂无订单</p></div>';
+        } else {
+            document.getElementById('myOrderList').innerHTML = data.list.map(o => `
+                <div class="order-card" onclick="showOrderDetail('${o.orderNo}')">
+                    <div class="top">
+                        <span class="title">${escHtml(o.title)}</span>
+                        <span class="price">¥${o.amount}</span>
+                    </div>
+                    <div class="meta">
+                        <span>${o.userNickname || '匿名用户'}</span>
+                        <span>${typeLabel(o.orderType)}</span>
+                        <span><span class="status-tag status-${o.status}">${statusLabel(o.status)}</span></span>
+                        <span>${timeAgo(o.createdAt)}</span>
+                    </div>
+                    ${o.remark ? `<div class="remark">备注: ${escHtml(o.remark)}</div>` : ''}
+                    ${(o.status === 'assigned' || o.status === 'in_progress') ? `
+                    <div class="btns">
+                        <button class="btn-sm btn-done" onclick="event.stopPropagation();completeOrder('${o.orderNo}')">完成订单</button>
+                    </div>` : ''}
+                </div>
+            `).join('');
+        }
+    } catch (e) {
+        document.getElementById('myOrderList').innerHTML = '<div class="empty"><p>加载失败: ' + e.message + '</p></div>';
+    }
+}
+
+async function completeOrder(orderNo) {
+    if (!confirm('确认完成此订单？')) return;
+    try {
+        await api(API + '/talents/' + talentId + '/orders/' + orderNo + '/complete', { method: 'POST' });
+        toast('订单已完成！');
+        loadMyOrders(myOrderStatus);
+    } catch (e) {
+        toast('操作失败: ' + e.message);
+    }
+}
+
+// ---- Profile ----
+async function loadProfile() {
+    try {
+        const data = await api(API + '/talents/' + talentId + '/profile');
+        document.getElementById('profileContent').innerHTML = `
+            <div class="profile-card">
+                <div class="avatar">${(data.name || '?')[0]}</div>
+                <div class="name">${escHtml(data.name)}</div>
+                <div class="type">${escHtml(data.typeLabel)}</div>
+                <div class="score">⭐ ${data.score || 0} 分</div>
+            </div>
+            <div class="stats-bar">
+                <div class="stat-card"><div class="val">${data.ordersCount || 0}</div><div class="lbl">总接单</div></div>
+                <div class="stat-card"><div class="val">${data.completedOrders || 0}</div><div class="lbl">已完成</div></div>
+                <div class="stat-card"><div class="val" style="font-size:16px;">¥${data.totalEarnings || '0.00'}</div><div class="lbl">累计收入</div></div>
+            </div>
+        `;
+    } catch (e) {
+        document.getElementById('profileContent').innerHTML = '<div class="empty"><p>加载失败</p></div>';
+    }
+}
+
+// ---- Order Detail ----
+async function showOrderDetail(orderNo) {
+    try {
+        // Try both endpoints
+        let data;
+        try {
+            data = await api(API + '/talents/' + talentId + '/orders/' + orderNo);
+        } catch (_) {
+            data = await api(API + '/order-pool');
+            data = data.list.find(o => o.orderNo === orderNo);
+            if (!data) throw new Error('订单未找到');
+        }
+        document.getElementById('detailModal').style.display = 'flex';
+        document.getElementById('detailContent').innerHTML = `
+            <span class="close" onclick="closeDetail()">✕</span>
+            <h3>${escHtml(data.title || '订单详情')}</h3>
+            <div class="info-row"><span class="k">订单编号</span><span class="v">${data.orderNo}</span></div>
+            <div class="info-row"><span class="k">类型</span><span class="v">${typeLabel(data.orderType)}</span></div>
+            <div class="info-row"><span class="k">金额</span><span class="v" style="color:var(--primary);font-weight:700;">¥${data.amount}</span></div>
+            <div class="info-row"><span class="k">用户</span><span class="v">${escHtml(data.userNickname || '匿名')}</span></div>
+            <div class="info-row"><span class="k">状态</span><span class="v"><span class="status-tag status-${data.status}">${statusLabel(data.status)}</span></span></div>
+            ${data.remark ? `<div class="info-row"><span class="k">备注</span><span class="v">${escHtml(data.remark)}</span></div>` : ''}
+            <div class="info-row"><span class="k">创建时间</span><span class="v">${formatTime(data.createdAt)}</span></div>
+            ${data.completedAt ? `<div class="info-row"><span class="k">完成时间</span><span class="v">${formatTime(data.completedAt)}</span></div>` : ''}
+        `;
+    } catch (e) {
+        toast('加载详情失败');
+    }
+}
+
+function closeDetail() { document.getElementById('detailModal').style.display = 'none'; }
+
+// ---- Utils ----
+function escHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function typeLabel(t) { return t === 'escort' ? '陪玩' : t === 'boost' ? '上分' : t === 'coaching' ? '教学' : t || '其他'; }
+function statusLabel(s) { return s === 'pending_assign' ? '待接单' : s === 'assigned' ? '已接单' : s === 'in_progress' ? '进行中' : s === 'completed' ? '已完成' : s === 'canceled' ? '已取消' : s; }
+function timeAgo(ts) { if (!ts) return ''; const d = new Date(); const t = new Date(ts); const m = Math.floor((d - t) / 60000); if (m < 1) return '刚刚'; if (m < 60) return m + '分钟前'; const h = Math.floor(m / 60); if (h < 24) return h + '小时前'; return Math.floor(h / 24) + '天前'; }
+function formatTime(ts) { if (!ts) return ''; const t = new Date(ts); return t.getFullYear() + '-' + String(t.getMonth()+1).padStart(2,'0') + '-' + String(t.getDate()).padStart(2,'0') + ' ' + String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0'); }
+</script>
+</body>
+</html>
