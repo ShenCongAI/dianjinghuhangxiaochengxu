@@ -142,17 +142,19 @@ model Refund {
 }
 
 model PartnerApplication {
-  id        Int      @id @default(autoincrement())
-  status    String   @default("pending")
-  name      String
-  specialty String
-  note      String?
-  contact   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  userId    Int
+  id           Int      @id @default(autoincrement())
+  status       String   @default("pending")
+  name         String
+  specialty    String
+  note         String?
+  contact      String?
+  cover        String?
+  voiceSample  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  userId       Int
 
-  user      User     @relation(fields: [userId], references: [id])
+  user         User     @relation(fields: [userId], references: [id])
 }
 
 model BusinessLead {
