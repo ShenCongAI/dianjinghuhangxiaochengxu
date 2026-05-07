@@ -220,6 +220,11 @@ export class PrismaDataService {
         productId: p.id,
         title: p.title,
         price: p.price.toFixed(2),
+        priceSuffix: p.priceSuffix,
+        tag: p.tag,
+        badge: p.badge,
+        cover: p.cover,
+        orderType: p.orderType,
       })),
     };
   }
@@ -627,7 +632,13 @@ export class PrismaDataService {
     filters: { orderType?: string; status?: string; page?: number; pageSize?: number },
   ) {
     const where: any = { userId };
-    if (filters.orderType) where.orderType = filters.orderType;
+    if (filters.orderType) {
+      if (filters.orderType === 'escort') {
+        where.orderType = { in: ['escort', 'playmate'] };
+      } else {
+        where.orderType = filters.orderType;
+      }
+    }
     if (filters.status) where.status = filters.status;
 
     const page = filters.page ?? 1;
@@ -1466,6 +1477,8 @@ export class PrismaDataService {
         badge: p.badge,
         cover: p.cover,
         status: p.status,
+        intro: p.introJson ? JSON.parse(p.introJson) : [],
+        notice: p.noticeJson ? JSON.parse(p.noticeJson) : [],
       })),
       pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
     };
@@ -1474,9 +1487,10 @@ export class PrismaDataService {
   async createService(payload: Record<string, unknown>) {
     const title = (payload.title as string) ?? '';
     if (!title.trim()) throw new BadRequestException('服务标题不能为空');
+    const id = (payload.id as string)?.trim() || this.slugify(title);
     const service = await this.prisma.product.create({
       data: {
-        id: this.slugify(title),
+        id,
         title,
         category: (payload.category as string) ?? 'more',
         orderType: ((payload.orderType ?? payload.type) as OrderType) ?? 'escort',
