@@ -1354,9 +1354,10 @@ const API_BASE = window.location.origin + '/api/v1/app';
                 pendingOrderNo = null;
                 showToast('支付成功！');
                 pageHistory = [activeTab];
-                await loadRealOrders(currentProduct.type || 'escort');
+                const showType = currentProduct.type === 'gear' ? 'gear' : 'escort';
+                await loadRealOrders(showType);
                 showPage('orders');
-                setOrderTab(currentProduct.type || 'escort');
+                setOrderTab(showType);
             } catch (e) {
                 showToast('支付失败: ' + e.message);
             } finally {
@@ -1388,17 +1389,18 @@ const API_BASE = window.location.origin + '/api/v1/app';
                 try {
                     const result = await requestAPI('/payment/status/' + orderNo);
                     if (result.data?.status === 'paid') {
-                        showToast('支付成功！');
-                        await loadRealOrders(currentProduct.type || 'escort');
+                        const showType = currentProduct?.type === 'gear' ? 'gear' : 'escort';
+                        await loadRealOrders(showType);
                         showPage('orders');
-                        setOrderTab(currentProduct.type || 'escort');
+                        setOrderTab(showType);
                         return;
                     }
                 } catch (_) {}
                 await new Promise(r => setTimeout(r, 2000));
             }
             showToast('支付确认超时，请查看订单列表');
-            await loadRealOrders(currentProduct.type || 'escort');
+            const showType2 = currentProduct?.type === 'gear' ? 'gear' : 'escort';
+            await loadRealOrders(showType2);
         }
 
         async function loadRealOrders(type) {
@@ -1644,10 +1646,15 @@ const API_BASE = window.location.origin + '/api/v1/app';
             navigateTo('talent-detail');
         }
 
-        function bookTalent() {
+        async function bookTalent() {
             if (!currentTalent) {
                 showToast('请先选择大神');
                 return;
+            }
+            if (!authToken) {
+                showToast('请先登录...');
+                const ok = await mockLogin();
+                if (!ok) return;
             }
             currentProduct = {
                 id: `talent-${currentTalent.id}`,
@@ -1655,15 +1662,25 @@ const API_BASE = window.location.origin + '/api/v1/app';
                 price: currentTalent.price,
                 tag: `${currentTalent.type} · ${currentTalent.voice}`,
                 badge: '陪玩预约',
-                type: 'escort',
+                type: 'playmate',
                 cover: 'data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27300%27%20height=%27200%27%3E%3Crect%20fill=%27%23e8edf2%27%20width=%27300%27%20height=%27200%27/%3E%3Ctext%20x=%27150%27%20y=%27110%27%20text-anchor=%27middle%27%20font-family=%27sans-serif%27%20font-size=%2718%27%20fill=%27%2396a8c0%27%3E9100%3C/text%3E%3C/svg%3E',
                 intro: ['支持语音连麦和娱乐陪玩场景。',
                     '高峰时段若本人离线，将由客服二次确认。'
                 ],
                 notice: ['预约后请保持联系方式畅通。', '如需指定时间段，请先和客服确认。']
             };
-            renderCheckout();
-            navigateTo('checkout');
+            try {
+                const order = await createOrder({
+                    talentId: currentTalent.id,
+                    orderType: 'playmate',
+                    quantity: 1,
+                });
+                pendingOrderNo = order.orderNo;
+                renderCheckout();
+                navigateTo('checkout');
+            } catch (e) {
+                showToast('创建订单失败: ' + e.message);
+            }
         }
 
         function renderClubList() {

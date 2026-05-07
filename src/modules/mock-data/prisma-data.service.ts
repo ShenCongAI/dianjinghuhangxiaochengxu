@@ -627,7 +627,13 @@ export class PrismaDataService {
     filters: { orderType?: string; status?: string; page?: number; pageSize?: number },
   ) {
     const where: any = { userId };
-    if (filters.orderType) where.orderType = filters.orderType;
+    if (filters.orderType) {
+      if (filters.orderType === 'escort') {
+        where.orderType = { in: ['escort', 'playmate'] };
+      } else {
+        where.orderType = filters.orderType;
+      }
+    }
     if (filters.status) where.status = filters.status;
 
     const page = filters.page ?? 1;
