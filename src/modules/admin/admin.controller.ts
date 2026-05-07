@@ -27,7 +27,7 @@ export class AdminController {
   @Post('upload')
   async uploadFile(@Body() body: { file: string; filename: string }) {
     if (!body.file || !body.filename) throw new BadRequestException('缺少文件数据');
-    const base64Data = body.file.replace(/^data:image\/\w+;base64,/, '');
+    const base64Data = body.file.replace(/^data:[^;]+;base64,/, '');
     const ext = body.filename.includes('.') ? body.filename.substring(body.filename.lastIndexOf('.')) : '.png';
     const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1e9) + ext;
     const filePath = join(process.cwd(), 'uploads', uniqueName);
@@ -233,6 +233,24 @@ export class AdminController {
         body.reason,
       ),
     );
+  }
+
+  @Post('talents')
+  async createTalent(@Body() body: Record<string, unknown>) {
+    return ok(await this.dataService.createTalent(body));
+  }
+
+  @Put('talents/:talentId')
+  async updateTalent(
+    @Param('talentId') talentId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return ok(await this.dataService.updateTalent(talentId, body));
+  }
+
+  @Delete('talents/:talentId')
+  async deleteTalent(@Param('talentId') talentId: string) {
+    return ok(await this.dataService.deleteTalent(talentId));
   }
 
   @Get('partner-applications')
