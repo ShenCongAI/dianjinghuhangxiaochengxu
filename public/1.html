@@ -420,13 +420,7 @@
                 <span id="section-page-title" class="title">专区</span>
             </div>
 
-            <div id="section-hero" class="section-hero">
-                <h2 id="section-hero-title">专区标题</h2>
-                <p id="section-hero-subtitle">专区简介</p>
-                <div id="section-quick-links" class="quick-links"></div>
-            </div>
-
-            <div class="section-title">推荐服务</div>
+            <div class="section-title" style="margin-top:10px;">推荐服务</div>
             <div id="section-products"></div>
         </div>
 
@@ -1541,24 +1535,25 @@ const API_BASE = window.location.origin + '/api/v1/app';
 
         async function openSection(sectionKey) {
             const section = sectionData[sectionKey];
+            const titleMap = { subway: '地铁护航', gear: '装备专区', boost: '极速上分', more: '更多服务' };
             // 尝试从API加载专区数据
             try {
                 const result = await requestAPI(`/sections/${sectionKey}`);
                 if (result.data) {
                     const sec = result.data;
-                    const displayTitle = section?.title || sec.title || sectionKey;
-                    document.getElementById('section-page-title').innerText = displayTitle;
-                    document.getElementById('section-hero-title').innerText = displayTitle;
-                    document.getElementById('section-hero-subtitle').innerText = section?.subtitle || sec.subtitle || '';
-                    if (section) document.getElementById('section-hero').style.background = section.theme;
-                    if (section) {
-                        document.getElementById('section-quick-links').innerHTML = section.quickLinks.map(item => {
-                            return `<div class="quick-link" onclick="${item.action}">${item.label}</div>`;
-                        }).join('');
-                    }
+                    document.getElementById('section-page-title').innerText = titleMap[sectionKey] || sec.title || sectionKey;
                     document.getElementById('section-products').innerHTML = (sec.products || []).map(p => {
-                        const prod = p.productId ? p : productCatalog[p];
-                        return prod ? renderProductCard(prod) : '';
+                        const prod = {
+                            id: p.productId || p.id,
+                            title: p.title,
+                            price: p.price,
+                            priceSuffix: p.priceSuffix || '',
+                            tag: p.tag || '',
+                            badge: p.badge || '',
+                            cover: p.cover || '',
+                            type: p.orderType || p.type || 'escort'
+                        };
+                        return renderProductCard(prod);
                     }).join('');
                     navigateTo('section');
                     return;
@@ -1569,14 +1564,8 @@ const API_BASE = window.location.origin + '/api/v1/app';
             // 回退到本地数据
             if (!section) return;
             document.getElementById('section-page-title').innerText = section.title;
-            document.getElementById('section-hero-title').innerText = section.title;
-            document.getElementById('section-hero-subtitle').innerText = section.subtitle;
-            document.getElementById('section-hero').style.background = section.theme;
             document.getElementById('section-products').innerHTML = section.products.map(key => {
                 return renderProductCard(productCatalog[key]);
-            }).join('');
-            document.getElementById('section-quick-links').innerHTML = section.quickLinks.map(item => {
-                return `<div class="quick-link" onclick="${item.action}">${item.label}</div>`;
             }).join('');
             navigateTo('section');
         }

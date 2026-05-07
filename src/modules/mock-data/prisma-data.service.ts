@@ -220,6 +220,11 @@ export class PrismaDataService {
         productId: p.id,
         title: p.title,
         price: p.price.toFixed(2),
+        priceSuffix: p.priceSuffix,
+        tag: p.tag,
+        badge: p.badge,
+        cover: p.cover,
+        orderType: p.orderType,
       })),
     };
   }
