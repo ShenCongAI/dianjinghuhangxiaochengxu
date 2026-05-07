@@ -1383,7 +1383,7 @@ const API_BASE = window.location.origin + '/api/v1/app';
         async function loadRealOrders(type) {
             currentOrderType = type || 'escort';
             try {
-                const result = await requestAPI('/orders?pageSize=50');
+                const result = await requestAPI('/orders?pageSize=50&orderType=' + encodeURIComponent(currentOrderType));
                 if (result.data && result.data.list) {
                     orderData[currentOrderType] = result.data.list.map(o => ({
                         no: o.orderNo,
@@ -1700,6 +1700,7 @@ const API_BASE = window.location.origin + '/api/v1/app';
 
         function openOrders(type) {
             currentOrderType = type;
+            navigateTo('orders');
             setOrderTab(type);
             loadRealOrders(type);
         }
