@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="9100电竞">
+    <meta name="theme-color" content="#FF9900">
+    <meta name="format-detection" content="telephone=no">
+    <title>9100电竞</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+            --primary: #FF9900;
+            --primary-dark: #FF6600;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
+        body { margin: 0; padding: 0; background-color: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; min-height: -webkit-fill-available; }
+
+        /* --- 页面容器 --- */
+        .phone-frame {
+            width: 100%;
+            max-width: 430px;
+            height: 100vh;
+            background: #fff;
+            overflow: hidden;
+            position: relative;
+            margin: 0 auto;
+        }
+
+        /* --- 页面通用结构 --- */
+        .page {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: #f7f8fa;
+            overflow-y: auto;
+            padding-bottom: 60px; /* 为底部导航留空 */
+            display: none; /* 默认隐藏 */
+            animation: fadeIn 0.3s ease;
+        }
+        .page.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- 通用组件 --- */
+        .status-bar { height: 44px; width: 100%; position: relative; padding-top: 10px; text-align: center; font-size: 14px; font-weight: 600; color: #333; z-index: 10; background: transparent; }
+        .nav-bar { height: 50px; background: #fff; display: flex; align-items: center; justify-content: center; position: relative; border-bottom: 1px solid #eee; }
+        .nav-bar .back-btn { position: absolute; left: 15px; font-size: 18px; color: #333; cursor: pointer; }
+        .nav-bar .title { font-size: 16px; font-weight: bold; color: #333; }
+        .btn { display: block; width: 90%; margin: 10px auto; padding: 12px; border-radius: 25px; text-align: center; font-weight: bold; cursor: pointer; border: none; outline: none; transition: opacity 0.2s; }
+        .btn:active { opacity: 0.8; }
+        .btn-primary { background: linear-gradient(90deg, #FF9900, #FF6600); color: white; }
+        .btn-outline { border: 1px solid #FF9900; color: #FF9900; background: transparent; }
+        .badge { position: absolute; top: -5px; right: -5px; background: red; color: white; font-size: 10px; padding: 2px 5px; border-radius: 10px; }
+
+        /* --- 1. 启动页 --- */
+        #splash-page { background: #fff; z-index: 999; }
+        #splash-page.active { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .logo-3d { font-size: 80px; font-weight: 900; color: #FF9900; text-shadow: 2px 2px 0 #333; transform: rotate(-10deg); margin-bottom: 20px; font-family: 'Arial Black', sans-serif; }
+
+        /* --- 2. 首页 --- */
+        .banner { width: 100%; height: 120px; background: linear-gradient(135deg, #2c3e50, #4ca1af); display: flex; justify-content: center; align-items: center; color: white; font-size: 24px; font-weight: bold; }
+        .notice-bar { background: #fffbe6; color: #faad14; padding: 8px 15px; font-size: 12px; display: flex; align-items: center; }
+        .grid-menu { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 20px 15px; background: #fff; margin-bottom: 10px; }
+        .grid-item { display: flex; flex-direction: column; align-items: center; font-size: 12px; color: #333; }
+        .grid-item i { font-size: 24px; margin-bottom: 8px; color: #FF9900; }
+        .section-title { padding: 15px; font-weight: bold; font-size: 16px; color: #333; }
+        .product-card { background: #fff; margin: 0 15px 15px; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; cursor: pointer; }
+        .product-img { width: 100px; height: 100px; background: #eee; object-fit: cover; }
+        .product-info { flex: 1; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; }
+        .product-title { font-size: 14px; font-weight: bold; color: #333; }
+        .product-tags { font-size: 10px; color: #999; }
+        .product-price { color: #FF4444; font-weight: bold; font-size: 16px; }
+
+        /* --- 3. 选人页 --- */
+        .filter-tabs { display: flex; background: #fff; padding: 10px; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid #eee; }
+        .tab { flex: 1; text-align: center; padding: 5px; margin: 0 10px; border-radius: 15px; font-size: 14px; font-weight: 600; color: #666; cursor: pointer; }
+        .tab.active { background: #FFEBCD; color: #FF6600; }
+        .talent-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }
+        .talent-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; position: relative; }
+        .talent-img { width: 100%; height: 150px; background: #ddd; object-fit: cover; }
+        .talent-info { padding: 8px; }
+        .talent-name { font-size: 14px; font-weight: bold; color: #333; }
+        .voice-btn { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 12px; }
+
+        /* --- 4. 我的页 --- */
+        .profile-header { background: #FF9900; padding: 40px 20px 20px; color: white; display: flex; align-items: center; }
+        .avatar { width: 60px; height: 60px; border-radius: 50%; background: #fff; margin-right: 15px; border: 2px solid rgba(255,255,255,0.5); }
+        .uid-box { font-size: 12px; opacity: 0.9; display: flex; align-items: center; }
+        .menu-list { background: #fff; margin-top: 10px; }
+        .menu-item { padding: 15px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 14px; color: #333; }
+        .menu-item i { color: #999; }
+
+        /* --- 5. 底部导航 --- */
+        .tab-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: #fff; border-top: 1px solid #eee; display: flex; justify-content: space-around; align-items: center; padding-bottom: 10px; z-index: 100; }
+        .tab-item { display: flex; flex-direction: column; align-items: center; color: #999; font-size: 10px; cursor: pointer; }
+        .tab-item i { font-size: 22px; margin-bottom: 4px; }
+        .tab-item.active { color: #FF9900; }
+
+        /* --- 5.5 详情页 --- */
+        #detail-page { z-index: 150; padding-bottom: 96px; }
+        .detail-hero { padding: 20px; text-align: center; }
+        .detail-description { background: #fff; padding: 20px; margin-top: 10px; font-size: 14px; color: #555; line-height: 1.6; }
+        .detail-tagline { font-size: 12px; color: #999; margin-top: 8px; }
+        .detail-footer { position: absolute; left: 0; right: 0; bottom: 0; background: #fff; padding: 10px 20px 18px; border-top: 1px solid #eee; z-index: 20; }
+        .detail-footer .btn { width: 100%; margin: 0; }
+        #talent-detail-page, #checkout-page { z-index: 160; padding-bottom: 96px; }
+        .page-pad { padding: 15px; }
+        .soft-card { background: #fff; margin: 0 15px 15px; padding: 16px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .search-box { background: #fff; padding: 15px; border-bottom: 1px solid #f0f0f0; }
+        .search-shell { background: #f6f6f6; border-radius: 24px; display: flex; align-items: center; padding: 0 12px; gap: 8px; }
+        .search-shell input { flex: 1; border: none; background: transparent; height: 40px; font-size: 14px; outline: none; }
+        .ghost-btn { border: none; background: transparent; color: #FF6600; font-size: 13px; font-weight: 600; cursor: pointer; }
+        .chip-wrap { display: flex; flex-wrap: wrap; gap: 10px; padding: 0 15px 15px; }
+        .chip { background: #fff; color: #666; border-radius: 18px; padding: 8px 14px; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); cursor: pointer; }
+        .section-hero { margin: 15px; border-radius: 18px; padding: 18px; color: white; }
+        .section-hero h2 { margin: 0 0 6px; font-size: 22px; }
+        .section-hero p { margin: 0; font-size: 12px; opacity: 0.9; }
+        .info-card { background: #fff; margin: 15px; border-radius: 16px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .meta-text { font-size: 12px; color: #999; line-height: 1.6; }
+        .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .tag-pill { background: #FFF3E0; color: #FF6600; padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+        .stat-item { background: #faf7f2; border-radius: 12px; padding: 12px 8px; text-align: center; }
+        .stat-value { font-size: 16px; font-weight: 700; color: #333; }
+        .stat-label { font-size: 11px; color: #999; margin-top: 4px; }
+        .btn-compact { width: auto; margin: 0; padding: 10px 16px; display: inline-block; }
+        .club-hero { margin: 15px; border-radius: 18px; padding: 20px; color: white; background: linear-gradient(135deg, #1d3557, #e76f51); }
+        .club-hero h2 { margin: 0 0 8px; font-size: 24px; }
+        .club-hero p { margin: 0 0 16px; font-size: 12px; opacity: 0.9; }
+        .hero-badge { display: inline-block; padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,0.18); font-size: 11px; margin-bottom: 12px; }
+        .club-card { background: #fff; margin: 0 15px 15px; border-radius: 16px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .club-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+        .club-title { font-size: 16px; font-weight: 700; color: #333; }
+        .club-desc { font-size: 12px; color: #666; margin: 8px 0 12px; line-height: 1.6; }
+        .club-meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: #666; }
+        .order-card { background: #fff; margin: 0 15px 15px; border-radius: 16px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .order-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .order-status { background: #FFF3E0; color: #FF6600; padding: 4px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+        .order-status-done { background: #E8F5E9; color: #2E7D32; padding: 4px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+        .order-meta { font-size: 12px; color: #999; margin-top: 8px; }
+        .faq-item { background: #fff; margin: 0 15px 12px; border-radius: 16px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .faq-question { font-size: 14px; font-weight: 700; color: #333; margin-bottom: 8px; }
+        .faq-answer { font-size: 13px; color: #666; line-height: 1.6; }
+        .form-card { background: #fff; margin: 15px; border-radius: 16px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .field-label { display: block; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 8px; }
+        .text-input, .text-area { width: 100%; border: 1px solid #e8e8e8; border-radius: 12px; padding: 12px; font-size: 14px; background: #fafafa; outline: none; }
+        .text-area { min-height: 96px; resize: none; }
+        .payment-option { display: flex; justify-content: space-between; align-items: center; padding: 15px 16px; border-bottom: 1px solid #f2f2f2; cursor: pointer; }
+        .payment-option:last-child { border-bottom: none; }
+        .payment-option.active { background: #fff8f0; }
+        .payment-option .pay-icon { font-size: 18px; margin-right: 10px; width: 20px; text-align: center; }
+        .payment-option .check-icon { color: #ccc; }
+        .payment-option.active .check-icon { color: #FF9900; }
+        .line-list p { margin: 0 0 10px; }
+        .line-list p:last-child { margin-bottom: 0; }
+        .empty-state { padding: 35px 15px; text-align: center; color: #999; font-size: 13px; }
+        .checkout-summary { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .quick-links { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px; }
+        .quick-link { background: #f8f8f8; border-radius: 12px; padding: 12px; font-size: 12px; color: #555; cursor: pointer; }
+
+        /* --- 6. 弹窗 --- */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 200; }
+        .modal-content { background: #fff; width: 80%; padding: 20px; border-radius: 15px; text-align: center; }
+        .checkbox-group { display: flex; align-items: center; justify-content: center; margin: 15px 0; font-size: 12px; color: #666; }
+        .checkbox-group input { margin-right: 5px; }
+
+    </style>
+</head>
+<body>
+
+    <!-- 加载遮罩 -->
+    <div id="loading-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.9);display:none;justify-content:center;align-items:center;z-index:3000;flex-direction:column;">
+        <div style="width:40px;height:40px;border:3px solid #eee;border-top-color:#FF9900;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+        <p style="margin-top:12px;color:#999;font-size:13px;" id="loading-text">加载中...</p>
+    </div>
+    <div class="phone-frame">
+
+        <!-- ================== 页面 1: 启动页 ================== -->
+        <div id="splash-page" class="page active">
+            <div style="text-align: center;">
+                <div class="logo-3d">9100</div>
+                <p style="color: #666; margin-bottom: 30px; font-size: 14px;">欢迎来到 9100电竞</p>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="agree-check">
+                    <label for="agree-check">已阅读并同意 <span style="color:#FF9900; cursor:pointer; text-decoration:underline" onclick="event.stopPropagation(); showToast('《用户协议》：本平台提供游戏陪玩及护航服务，禁止任何形式的线下交易。')">《用户协议》</span> 和 <span style="color:#FF9900; cursor:pointer; text-decoration:underline" onclick="event.stopPropagation(); showToast('《隐私政策》：我们仅收集必要的账号信息用于订单服务，不会向第三方泄露您的个人信息。')">《隐私政策》</span></label>
+                </div>
+
+                <button class="btn btn-primary" onclick="enterApp()">开始使用</button>
+                <p style="font-size: 10px; color: #999; margin-top: 10px;">本系统仅面向成年人</p>
+            </div>
+        </div>
+
+        <!-- ================== 页面 2: 首页 (Home) ================== -->
+        <div id="home-page" class="page">
+            <div class="status-bar">
+                <span style="position:absolute; left:15px;"><i class="fas fa-signal"></i> 5G</span>
+                <span>10:46</span>
+                <span style="position:absolute; right:15px;"><i class="fas fa-battery-full"></i></span>
+            </div>
+
+            <!-- 顶部搜索 -->
+            <div style="padding: 10px 15px; background: #fff;">
+                <div style="background: #f5f5f5; height: 35px; border-radius: 20px; display: flex; align-items: center; padding: 0 15px; color: #999; font-size: 12px;" onclick="openSearch()">
+                    <i class="fas fa-search" style="margin-right: 8px;"></i> 搜索陪玩/大神/商品
+                </div>
+            </div>
+
+            <div style="overflow-y: auto; height: calc(100% - 150px);">
+                <!-- Banner -->
+                <div class="banner">
+                    <div style="text-align: center;">
+                        <div style="font-size: 18px; margin-bottom: 5px;">翻车三把 直接退款</div>
+                        <div style="font-size: 12px; opacity: 0.8; font-weight: normal;">平台服务保障 · 安全放心</div>
+                    </div>
+                </div>
+
+                <!-- 公告 -->
+                <div class="notice-bar">
+                    <i class="fas fa-bullhorn" style="margin-right: 8px;"></i>
+                    <marquee style="flex:1;">平台人员不会主动私信您，谨防被骗！未成年人禁止下单。</marquee>
+                </div>
+
+                <!-- 金刚区 -->
+                <div class="grid-menu">
+                    <div class="grid-item" onclick="openSection('subway')">
+                        <i class="fas fa-subway"></i>
+                        <span>地铁护航</span>
+                    </div>
+                    <div class="grid-item" onclick="openSection('gear')">
+                        <i class="fas fa-box-open"></i>
+                        <span>装备专区</span>
+                    </div>
+                    <div class="grid-item" onclick="openSection('boost')">
+                        <i class="fas fa-rocket"></i>
+                        <span>极速上分</span>
+                    </div>
+                    <div class="grid-item" onclick="openSection('more')">
+                        <i class="fas fa-th-large"></i>
+                        <span>更多</span>
+                    </div>
+                </div>
+
+                <!-- 爆款推荐 -->
+                <div class="section-title">🔥 爆款推荐</div>
+                <div id="hot-product-grid"><div style="text-align:center;padding:24px;color:#999;">加载中...</div></div>
+
+            </div>
+
+            <!-- 底部导航 -->
+            <div class="tab-bar">
+                <div class="tab-item active" onclick="switchTab('home')">
+                    <i class="fas fa-home"></i>
+                    <span>首页</span>
+                </div>
+                <div class="tab-item" onclick="switchTab('select')">
+                    <i class="fas fa-user-friends"></i>
+                    <span>选人</span>
+                </div>
+                <div class="tab-item" onclick="switchTab('profile')">
+                    <i class="fas fa-user"></i>
+                    <span>我的</span>
+                </div>
+                <div class="tab-item" onclick="switchTab('club')">
+                    <i class="fas fa-users"></i>
+                    <span>俱乐部</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================== 页面 3: 选人页 (Selection) ================== -->
+        <div id="select-page" class="page">
+            <div class="status-bar">
+                <span style="position:absolute; left:15px;"><i class="fas fa-arrow-left" onclick="switchTab('home')"></i></span>
+                <span>9100电竞选人广场</span>
+            </div>
+
+            <div class="filter-tabs">
+                <div class="tab active" onclick="filterTalent(this)">全部</div>
+                <div class="tab" onclick="filterTalent(this)">男神</div>
+                <div class="tab" onclick="filterTalent(this)">女神</div>
+            </div>
+
+            <div class="talent-grid" id="talent-list">
+                <!-- JS 渲染列表 -->
+            </div>
+
+            <div class="tab-bar">
+                <div class="tab-item" onclick="switchTab('home')"><i class="fas fa-home"></i><span>首页</span></div>
+                <div class="tab-item active"><i class="fas fa-user-friends"></i><span>选人</span></div>
+                <div class="tab-item" onclick="switchTab('profile')"><i class="fas fa-user"></i><span>我的</span></div>
+                <div class="tab-item" onclick="switchTab('club')"><i class="fas fa-users"></i><span>俱乐部</span></div>
+            </div>
+        </div>
+
+        <!-- ================== 页面 4: 我的页 (Profile) ================== -->
+        <div id="profile-page" class="page">
+            <div class="status-bar">
+                <span style="position:absolute; left:15px;"><i class="fas fa-arrow-left" onclick="switchTab('home')"></i></span>
+                <span>个人中心</span>
+            </div>
+
+            <div class="profile-header">
+                <div class="avatar"><img src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27100%27 height=%27100%27%3E%3Crect fill=%27%23e8edf2%27 width=%27100%27 height=%27100%27/%3E%3Ctext x=%2750%27 y=%2755%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-size=%2712%27 fill=%27%2396a8c0%27%3E9100%3C/text%3E%3C/svg%3E" style="width:100%; height:100%; border-radius:50%;"></div>
+                <div>
+                    <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">9100用户_8848</div>
+                    <div class="uid-box">UID: 14864083 <i class="fas fa-copy" style="margin-left: 5px; font-size: 10px;"></i></div>
+                </div>
+            </div>
+
+            <div class="menu-list">
+                <div class="menu-item" onclick="openOrders('escort')">
+                    <span><i class="fas fa-shield-alt" style="color:#FF9900; margin-right:10px;"></i> 护航订单</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="menu-item" onclick="openOrders('gear')">
+                    <span><i class="fas fa-box" style="color:#FF9900; margin-right:10px;"></i> 装备订单</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </div>
+
+            <div class="menu-list" style="margin-top: 10px;">
+                <div class="menu-item" onclick="openPartner()">
+                    <span><i class="fas fa-file-alt" style="color:#333; margin-right:10px;"></i> 伙伴中心 (考核面试)</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="menu-item" onclick="openSupport()">
+                    <span><i class="fas fa-headset" style="color:#333; margin-right:10px;"></i> 联系客服</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="menu-item" onclick="openBusiness()">
+                    <span><i class="fas fa-briefcase" style="color:#333; margin-right:10px;"></i> 商务合作</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="menu-item" style="color: #FF4444;" onclick="location.reload()">
+                    <span><i class="fas fa-sign-out-alt" style="margin-right:10px;"></i> 退出登录</span>
+                </div>
+            </div>
+
+            <div class="tab-bar">
+                <div class="tab-item" onclick="switchTab('home')"><i class="fas fa-home"></i><span>首页</span></div>
+                <div class="tab-item" onclick="switchTab('select')"><i class="fas fa-user-friends"></i><span>选人</span></div>
+                <div class="tab-item active"><i class="fas fa-user"></i><span>我的</span></div>
+                <div class="tab-item" onclick="switchTab('club')"><i class="fas fa-users"></i><span>俱乐部</span></div>
+            </div>
+        </div>
+
+        <!-- ================== 页面 5: 详情页 (Detail) ================== -->
+        <div id="detail-page" class="page">
+            <div class="nav-bar">
+                <i class="fas fa-arrow-left back-btn" onclick="goBack()"></i>
+                <span class="title">商品详情</span>
+            </div>
+
+            <div class="detail-hero">
+                <img id="detail-image" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27300%27 height=%27200%27%3E%3Crect fill=%27%23e8edf2%27 width=%27300%27 height=%27200%27/%3E%3Ctext x=%27150%27 y=%27110%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-size=%2718%27 fill=%27%2396a8c0%27%3E9100%3C/text%3E%3C/svg%3E" alt="cover" style="width: 200px; height: 200px; margin: 0 auto 20px; border-radius: 10px; object-fit: cover; display: block;">
+                <h2 id="detail-title" style="font-size: 20px; margin-bottom: 10px;">商品标题</h2>
+                <div style="color: #FF4444; font-size: 24px; font-weight: bold;">¥<span id="detail-price">0.00</span></div>
+                <div id="detail-tagline" class="detail-tagline">服务标签</div>
+            </div>
+
+            <div class="detail-description">
+                <h3>服务介绍：</h3>
+                <div id="detail-intro" class="line-list">
+                    <p>1. 纯手工上分，效率保障。</p>
+                    <p>2. 全程直播或截图反馈。</p>
+                    <p>3. 翻车包赔，安全放心。</p>
+                </div>
+                <br>
+                <h3>注意事项：</h3>
+                <div id="detail-notice" class="line-list">
+                    <p>请勿在游戏内乱说话，禁止顶号。</p>
+                </div>
+            </div>
+
+            <div class="detail-footer">
+                <button class="btn btn-primary" onclick="handlePurchase()">立即购买</button>
+            </div>
+        </div>
+
+        <!-- ================== 页面 6: 搜索页 ================== -->
+        <div id="search-page" class="page">
+            <div class="nav-bar">
+                <i class="fas fa-arrow-left back-btn" onclick="goBack()"></i>
+                <span class="title">搜索服务</span>
+            </div>
+
+            <div class="search-box">
+                <div class="search-shell">
+                    <i class="fas fa-search" style="color:#999;"></i>
+                    <input id="search-input" type="text" placeholder="搜索陪玩 / 大神 / 商品" onkeydown="if(event.key === 'Enter'){performSearch();}">
+                    <button class="ghost-btn" onclick="performSearch()">搜索</button>
+                </div>
+            </div>
+
+            <div class="section-title">热门搜索</div>
+            <div class="chip-wrap">
+                <div class="chip" onclick="fillSearch('地铁护航')">地铁护航</div>
+                <div class="chip" onclick="fillSearch('极速上分')">极速上分</div>
+                <div class="chip" onclick="fillSearch('雪隼')">雪隼</div>
+                <div class="chip" onclick="fillSearch('女神陪玩')">女神陪玩</div>
+            </div>
+
+            <div class="section-title">搜索结果</div>
+            <div id="search-results"></div>
+        </div>
+
+        <!-- ================== 页面 7: 分类页 ================== -->
+        <div id="section-page" class="page">
+            <div class="nav-bar">
+                <i class="fas fa-arrow-left back-btn" onclick="goBack()"></i>
+                <span id="section-page-title" class="title">专区</span>
+            </div>
+
+            <div id="section-hero" class="section-hero">
+                <h2 id="section-hero-title">专区标题</h2>
+                <p id="section-hero-subtitle">专区简介</p>
+                <div id="section-quick-links" class="quick-links"></div>
+            </div>
+
+            <div class="section-title">推荐服务</div>
+            <div id="section-products"></div>
+        </div>
+
+        <!-- ================== 页面 8: 俱乐部页 ================== -->
+        <div id="club-page" class="page">
+            <div class="status-bar">
+                <span style="position:absolute; left:15px;"><i class="fas fa-users"></i></span>
+                <span>俱乐部大厅</span>
+                <span style="position:absolute; right:15px; color:#FF9900; font-size:12px;" onclick="showToast('今晚 20:00 公会赛准时开打')">活动</span>
+            </div>
+
+            <div class="club-hero">
+                <div class="hero-badge">官方严选</div>
+                <h2>车队招募中</h2>
+                <p>组队护航、上分冲榜、娱乐赛开黑，一起把成交做起来。</p>
+                <button class="btn btn-outline btn-compact" onclick="showToast('招募信息已发布到大厅')">发布招募</button>
+            </div>
+
+            <div class="section-title">热门俱乐部</div>
+            <div id="club-list"></div>
+
+            <div class="tab-bar">
+                <div class="tab-item" onclick="switchTab('home')"><i class="fas fa-home"></i><span>首页</span></div>
+                <div class="tab-item" onclick="switchTab('select')"><i class="fas fa-user-friends"></i><span>选人</span></div>
+                <div class="tab-item" onclick="switchTab('profile')"><i class="fas fa-user"></i><span>我的</span></div>
+                <div class="tab-item active"><i class="fas fa-users"></i><span>俱乐部</span></div>
+            </div>
+        </div>
+
+        <!-- ================== 页面 9: 订单页 ================== -->
+        <div id="orders-page" class="page">
+            <div class="nav-bar">
+                <i class="fas fa-arrow-left back-btn" onclick="goBack('profile')"></i>
+                <span class="title">我的订单</span>
+            </div>
+
+            <div class="filter-tabs">
+                <div class="tab active" data-type="escort" onclick="switchOrderType('escort', this)">护航订单</div>
+                <div class="tab" data-type="gear" onclick="switchOrderType('gear', this)">装备订单</div>
+            </div>
+
+            <div id="orders-list" style="padding-top: 15px;"></div>
+        </div>
+
+        <!-- ================== 页面 10: 陪玩详情页 ================== -->
+        <div id="talent-detail-page" class="page">
+            <div class="nav-bar">
+                <i class="fas fa-arrow-left back-btn" onclick="goBack('select')"></i>
+                <span class="title">大神资料</span>
+            </div>
+
+            <div class="detail-hero">
+                <img id="talent-detail-image" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27300%27 height=%27200%27%3E%3Crect fill=%27%23e8edf2%27 width=%27300%27 height=%27200%27/%3E%3Ctext x=%27150%27 y=%27110%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-size=%2718%27 fill=%27%2396a8c0%27%3E9100%3C/text%3E%3C/svg%3E" alt="talent" style="width: 200px; height: 200px; margin: 0 auto 20px; border-radius: 16px; object-fit: cover; display: block;">
+                <h2 id="talent-detail-name" style="font-size: 22px; margin-bottom: 8px;">大神昵称</h2>
+                <div id="talent-detail-meta" class="meta-text">男神 · 秒回单 · 高好评</div>
+                <div class="tag-row" id="talent-detail-tags"></div>
+                <div class="stat-grid">
+                    <div class="stat-item">
+                        <div id="talent-score" class="stat-value">4.9</div>
+                        <div class="stat-label">综合评分</div>
+                    </div>
+                    <div class="stat-item">
+                        <div id="talent-orders" class="stat-value">999+</div>
+                        <div class="stat-label">服务订单</div>
+                    </div>
+                    <div class="stat-item">
+                        <div id="talent-price" class="stat-value">29.9</div>
+                        <div class="stat-label">起步价格</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3 style="margin-top:0;">服务简介</h3>
+                <p id="talent-detail-bio" class="meta-text" style="font-size:13px; color:#666;">陪玩简介</p>
+            </div>
+
+            <div class="detail-footer">
+                <button class="btn btn-primary" onclick="bookTalent()">立即预约</button>
+            </div>
+        </div>
+
+        <!-- ================== 页面 11: 支付页 ================== -->
+        <div id="checkout-page" class="page">
+            <div class="nav-bar">
+                <i class="fas fa-arrow-left back-btn" onclick="goBack()"></i>
+                <span class="title">确认支付</span>
+            </div>
+
+            <div class="info-card">
+                <div class="checkout-summary">
+                    <div>
+                        <div id="checkout-title" style="font-size:16px; font-weight:700; color:#333;">服务名称</div>
+                        <div id="checkout-tag" class="meta-text">服务标签</div>
+                    </div>
+                    <div style="color:#FF4444; font-size:24px; font-weight:700;">¥<span id="checkout-price">0.00</span></div>
+                </div>
+            </div>
+
+            <div class="form-card" style="padding:0;">
+                <div class="payment-option active" data-method="wechat" onclick="choosePayment('wechat')">
+                    <span><i class="fab fa-weixin pay-icon" style="color:#1AAD19;"></i>微信支付</span>
+                    <i class="fas fa-check-circle check-icon"></i>
+                </div>
+                <div class="payment-option" data-method="alipay" onclick="choosePayment('alipay')">
+                    <span><i class="fas fa-wallet pay-icon" style="color:#1677ff;"></i>支付宝</span>
+                    <i class="fas fa-check-circle check-icon"></i>
+                </div>
+                <div class="payment-option" data-method="balance" onclick="choosePayment('balance')">
+                    <span><i class="fas fa-coins pay-icon" style="color:#FF9900;"></i>余额支付</span>
+                    <i class="fas fa-check-circle check-icon"></i>
+                </div>
+            </div>
+
+            <div class="soft-card">
+                <div class="meta-text">支付后系统将自动分配接单人员，通常 5 分钟内会有客服联系。若 15 分钟无人接单，可全额退款。</div>
+            </div>
+
+            <div class="detail-footer">
+                <button id="pay-confirm-btn" class="btn btn-primary" onclick="confirmPayment()">确认支付</button>
+            </div>
+        </div>
+
+        <!-- ================== 页面 12: 伙伴中心页 ================== -->
+        <div id="partner-page" class="page">
+            <div class="nav-bar">
+                <i class="fas fa-arrow-left back-btn" onclick="goBack('profile')"></i>
+                <span class="title">伙伴中心</span>
+            </div>
+
+            <div class="soft-card">
+                <div class="hero-badge" style="background:#FFF3E0; color:#FF6600;">招募中</div>
+                <div style="font-size:18px; font-weight:700; color:#333; margin-bottom:6px;">考核面试服务</div>
+                <div class="meta-text">提交信息后可参与平台审核，审核通过即可接单陪玩、代练或车队服务。</div>
+            </div>
+
+            <div class="form-card">
+                <label class="field-label" for="partner-name">昵称 / 姓名</label>
+                <input id="partner-name" class="text-input" type="text" placeholder="输入你的昵称">
+                <label class="field-label" for="partner-game" style="margin-top:14px;">擅长项目</label>
+                <input id="partner-game" class="text-input" type="text" placeholder="例如：地铁护航、雪隼、语音陪玩">
+                <label class="field-label" for="partner-note" style="margin-top:14px;">补充说明</label>
+                <textarea id="partner-note" class="text-area" placeholder="可填写可接单时间、段位、风格等"></textarea>
+            </div>
+
+            <div class="soft-card">
+                <div style="font-weight:700; color:#333; margin-bottom:10px;">加入流程</div>
+                <div class="meta-text line-list">
+                    <p>1. 填写报名信息并提交。</p>
+                    <p>2. 平台客服 1 对 1 联系安排考核。</p>
+                    <p>3. 审核通过后开通接单权限。</p>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="submitPartnerApplication()">提交报名</button>
+        </div>
+
+        <!-- ================== 页面 13: 客服页 ================== -->
+        <div id="support-page" class="page">
+            <div class="nav-bar">
+                <i class="fas fa-arrow-left back-btn" onclick="goBack('profile')"></i>
+                <span class="title">联系客服</span>
+            </div>
+
+            <div class="soft-card">
+                <div style="font-size:16px; font-weight:700; color:#333; margin-bottom:8px;">在线客服</div>
+                <div class="meta-text">工作时间 09:00 - 02:00。紧急订单请备注“急单”，系统会优先派单。</div>
+                <div class="quick-links">
+                    <div class="quick-link" onclick="showToast('客服微信：kf9100-esports')">客服微信</div>
+                    <div class="quick-link" onclick="showToast('客服电话：400-9100-777')">客服电话</div>
+                    <div class="quick-link" onclick="showToast('退款申请已进入工单')">申请退款</div>
+                    <div class="quick-link" onclick="showToast('已记录账号异常反馈')">账号异常</div>
+                </div>
+            </div>
+
+            <div class="section-title">常见问题</div>
+            <div id="support-faq-list"></div>
+        </div>
+
+        <!-- ================== 页面 14: 商务合作页 ================== -->
+        <div id="business-page" class="page">
+            <div class="nav-bar">
+                <i class="fas fa-arrow-left back-btn" onclick="goBack('profile')"></i>
+                <span class="title">商务合作</span>
+            </div>
+
+            <div class="soft-card">
+                <div style="font-size:16px; font-weight:700; color:#333; margin-bottom:8px;">合作方向</div>
+                <div class="meta-text line-list">
+                    <p>1. 流量投放与渠道联运。</p>
+                    <p>2. 公会 / 战队 / 俱乐部合作。</p>
+                    <p>3. 装备商、服务商、内容合作。</p>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <label class="field-label" for="business-company">公司 / 团队名称</label>
+                <input id="business-company" class="text-input" type="text" placeholder="输入公司或团队名称">
+                <label class="field-label" for="business-contact" style="margin-top:14px;">联系方式</label>
+                <input id="business-contact" class="text-input" type="text" placeholder="手机号 / 微信 / 邮箱">
+                <label class="field-label" for="business-note" style="margin-top:14px;">合作诉求</label>
+                <textarea id="business-note" class="text-area" placeholder="简单描述你的合作方向和资源"></textarea>
+            </div>
+
+            <button class="btn btn-primary" onclick="submitBusinessForm()">提交合作意向</button>
+        </div>
+
+    </div>
+
+    <!-- ================== 通用弹窗 ================== -->
+    <div id="toast" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; padding: 15px 25px; border-radius: 8px; font-size: 14px; display: none; z-index: 2000; text-align: center;">
+        提示信息
+    </div>
+
+    <script>
+const API_BASE = window.location.origin + '/api/v1/app';
+        let authToken = localStorage.getItem('authToken') || null;
+        let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+
+        async function requestAPI(endpoint, options = {}) {
+            const url = `${API_BASE}${endpoint}`;
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: { ...headers, ...options.headers },
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    if (data.code === 401 || data.code === 403) {
+                        authToken = null;
+                        currentUser = null;
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('currentUser');
+                    }
+                    throw new Error(data.message || '请求失败');
+                }
+                return data;
+            } catch (error) {
+                console.error('API请求错误:', error);
+                throw error;
+            }
+        }
+
+        async function mockLogin() {
+            try {
+                const result = await requestAPI('/auth/mock-login', {
+                    method: 'POST',
+                    body: JSON.stringify({ userId: 14864083 }),
+                });
+                if (result.data && result.data.token) {
+                    authToken = result.data.token;
+                    currentUser = result.data.profile;
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    return true;
+                }
+            } catch (error) {
+                console.warn('API登录失败:', error.message);
+            }
+            showToast('登录失败，请检查网络后刷新重试');
+            return false;
+        }
+
+        async function fetchBootstrap() {
+            try {
+                const result = await requestAPI('/bootstrap');
+                return result.data;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        async function fetchProducts(params = {}) {
+            const query = new URLSearchParams(params).toString();
+            const result = await requestAPI(`/products${query ? '?' + query : ''}`);
+            return result.data?.list || [];
+        }
+
+        async function fetchHotKeywords() {
+            try {
+                const result = await requestAPI('/search/hot-keywords');
+                return result.data?.keywords || [];
+            } catch (error) {
+                return ['地铁护航', '极速上分', '雪隼', '女神陪玩'];
+            }
+        }
+
+        async function performSearchAPI(keyword) {
+            const result = await requestAPI(`/search?keyword=${encodeURIComponent(keyword)}`);
+            return result.data || { products: [], talents: [] };
+        }
+
+        async function fetchTalents(params = {}) {
+            const query = new URLSearchParams(params).toString();
+            const result = await requestAPI(`/talents${query ? '?' + query : ''}`);
+            return result.data?.list || [];
+        }
+
+        async function fetchTalentDetail(talentId) {
+            const result = await requestAPI(`/talents/${talentId}`);
+            return result.data;
+        }
+
+        async function fetchClubs() {
+            const result = await requestAPI('/clubs');
+            return result.data?.list || [];
+        }
+
+        async function fetchUserOrders(orderType, status) {
+            const params = {};
+            if (orderType) params.orderType = orderType;
+            if (status) params.status = status;
+            const query = new URLSearchParams(params).toString();
+            const result = await requestAPI(`/orders${query ? '?' + query : ''}`);
+            return result.data?.list || [];
+        }
+
+        async function fetchOrderDetail(orderNo) {
+            const result = await requestAPI(`/orders/${orderNo}`);
+            return result.data;
+        }
+
+        async function createOrder(payload) {
+            const result = await requestAPI('/orders', {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+            return result.data;
+        }
+
+        async function payOrderAPI(orderNo, paymentMethod) {
+            const result = await requestAPI(`/orders/${orderNo}/pay`, {
+                method: 'POST',
+                body: JSON.stringify({ paymentMethod }),
+            });
+            return result.data;
+        }
+
+        async function fetchSupportFaqs() {
+            const result = await requestAPI('/support/faqs');
+            return result.data?.list || [];
+        }
+
+        async function createTicket(payload) {
+            const result = await requestAPI('/support/tickets', {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+            return result.data;
+        }
+
+        async function submitPartnerApplication(payload) {
+            const result = await requestAPI('/partner-applications', {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+            return result.data;
+        }
+
+        async function submitBusinessLead(payload) {
+            const result = await requestAPI('/business-leads', {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+            return result.data;
+        }
+
+        async function fetchUserProfile() {
+            const result = await requestAPI('/me');
+            return result.data;
+        }
+
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            location.reload();
+        }
+
+        let productCatalog = {
+            'subway-escort': {
+                id: 'subway-escort', title: '地铁护航 300W-1000W', price: '9.90', priceSuffix: '起',
+                tag: '人工技术保障 · 纯手工', badge: '护航爆款', type: 'escort', cover: '', intro: [], notice: []
+            },
+            'crash-challenge': {
+                id: 'crash-challenge', title: '进阶翻车挑战单', price: '32.00', priceSuffix: '起',
+                tag: '保底500W · 翻车包赔', badge: '极速上分', type: 'escort', cover: '', intro: [], notice: []
+            },
+            'snowfalcon': {
+                id: 'snowfalcon', title: '人工服务-雪隼', price: '28.80',
+                tag: '王牌段位 · 包满意', badge: '人工服务', type: 'escort', cover: '', intro: [], notice: []
+            },
+            'gear-premium': {
+                id: 'gear-premium', title: '高阶电竞装备组合', price: '199.00',
+                tag: '高阶组合 · 包邮到家', badge: '高配专区', type: 'gear', cover: '', intro: [], notice: []
+            }
+        };
+
+        let sectionData = {
+            subway: {
+                title: '地铁护航专区',
+                subtitle: '低门槛上车，优先派单，适合稳定走量。',
+                theme: 'linear-gradient(135deg, #1d3557, #457b9d)',
+                products: ['subway-escort'],
+                quickLinks: [
+                    { label: '热卖护航', action: "openDetail('subway-escort')" },
+                    { label: '找陪玩', action: "switchTab('select')" },
+                    { label: '联系客服', action: "openSupport()" }
+                ]
+            },
+            gear: {
+                title: '装备专区',
+                subtitle: '设备、皮肤、资源类服务集中展示。',
+                theme: 'linear-gradient(135deg, #e76f51, #f4a261)',
+                products: ['gear-premium'],
+                quickLinks: [
+                    { label: '高配套装', action: "openDetail('gear-premium')" },
+                    { label: '装备订单', action: "openOrders('gear')" },
+                    { label: '商务合作', action: "openBusiness()" }
+                ]
+            },
+            boost: {
+                title: '极速上分',
+                subtitle: '高效率冲刺方案，适合赛季末和活动期。',
+                theme: 'linear-gradient(135deg, #264653, #2a9d8f)',
+                products: ['crash-challenge'],
+                quickLinks: [
+                    { label: '挑战单', action: "openDetail('crash-challenge')" },
+                    { label: '高手资料', action: "switchTab('select')" },
+                    { label: '退款规则', action: "openSupport()" }
+                ]
+            },
+            more: {
+                title: '更多服务',
+                subtitle: '人工服务、资源代购、陪玩预约都在这里。',
+                theme: 'linear-gradient(135deg, #6d597a, #b56576)',
+                products: ['snowfalcon'],
+                quickLinks: [
+                    { label: '人工服务', action: "openDetail('snowfalcon')" },
+                    { label: '语音陪玩', action: "fillSearch('女神陪玩')" },
+                    { label: '俱乐部', action: "switchTab('club')" },
+                    { label: '伙伴报名', action: "openPartner()" }
+                ]
+            }
+        };
+
+        let talents = [];
+
+        let clubs = [];
+
+        let supportFaqs = [];
+
+        let orderData = {
+            escort: [
+                {
+                    no: 'DH24042701',
+                    title: '地铁护航 300W-1000W',
+                    amount: '9.90',
+                    status: '进行中',
+                    time: '今天 20:30',
+                    tip: '技术手已接单，预计 6 分钟上线。',
+                    productId: 'subway-escort'
+                },
+                {
+                    no: 'DH24042112',
+                    title: '人工服务-雪隼',
+                    amount: '28.80',
+                    status: '已完成',
+                    time: '04-21 18:10',
+                    tip: '订单已完成，欢迎再次下单。',
+                    productId: 'snowfalcon'
+                }
+            ],
+            gear: [
+                {
+                    no: 'ZB24042308',
+                    title: '装备专区 新手包',
+                    amount: '19.90',
+                    status: '待发货',
+                    time: '04-23 21:12',
+                    tip: '仓库打包中，预计今晚发出。',
+                    productId: 'gear-starter'
+                }
+            ]
+        };
+
+        let currentPage = 'splash';
+        let activeTab = 'home';
+        let pageHistory = [];
+        let currentProduct = null;
+        let currentTalent = null;
+        let currentOrderType = 'escort';
+        let currentTalentFilter = '全部';
+        let selectedPayment = 'wechat';
+        let toastTimer = null;
+
+        window.onload = async function() {
+            checkAlipayReturn();
+            // 先从API加载数据（静默进行）
+            try {
+                const [products, talentsData, clubsData, faqsData] = await Promise.all([
+                    fetchProducts(),
+                    fetchTalents(),
+                    fetchClubs(),
+                    fetchSupportFaqs(),
+                ]);
+                if (products.length) updateProductCatalog(products);
+                if (talentsData.length) updateTalents(talentsData);
+                if (clubsData.length) updateClubs(clubsData);
+                if (faqsData.length) updateFaqs(faqsData);
+            } catch (e) {
+                console.warn('预加载数据失败，使用本地数据');
+            }
+            renderTalentList();
+            renderClubList();
+            renderSupportFaqs();
+        };
+
+        function showPage(pageName) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            const page = document.getElementById(pageName + '-page');
+            if (!page) return;
+            page.classList.add('active');
+            page.scrollTop = 0;
+            currentPage = pageName;
+        }
+
+        function navigateTo(pageName) {
+            if (currentPage && currentPage !== pageName) {
+                pageHistory.push(currentPage);
+            }
+            showPage(pageName);
+        }
+
+        function switchTab(pageName) {
+            activeTab = pageName;
+            pageHistory = [];
+            showPage(pageName);
+        }
+
+        async function enterApp() {
+            const check = document.getElementById('agree-check');
+            if (!check.checked) {
+                showToast('请先同意用户协议');
+                return;
+            }
+            showToast('正在登录...');
+            await mockLogin();
+            switchTab('home');
+            // 启动后从API加载数据
+            refreshAllData();
+        }
+
+        async function refreshAllData() {
+            try {
+                const [bootstrap, products, talentsData, clubsData, faqsData] = await Promise.all([
+                    fetchBootstrap(),
+                    fetchProducts(),
+                    fetchTalents(),
+                    fetchClubs(),
+                    fetchSupportFaqs(),
+                ]);
+                if (bootstrap) {
+                    if (bootstrap.banners) updateBanners(bootstrap.banners);
+                    if (bootstrap.hotProducts) updateHotProducts(bootstrap.hotProducts);
+                }
+                if (products.length) updateProductCatalog(products);
+                if (talentsData.length) { updateTalents(talentsData); renderTalentList(); }
+                if (clubsData.length) { updateClubs(clubsData); renderClubList(); }
+                if (faqsData.length) { updateFaqs(faqsData); renderSupportFaqs(); }
+            } catch (e) {
+                console.warn('数据加载失败:', e.message);
+                renderProductGrid();
+
+            }
+        }
+
+        function updateBanners(banners) {
+            const bannerEl = document.querySelector('.banner');
+            if (!bannerEl || !banners.length) return;
+            const b = banners[0];
+            if (b.image) {
+                bannerEl.style.background = `url('${b.image}') center/cover no-repeat`;
+            }
+            bannerEl.innerHTML = `<div style="text-align:center;position:relative;z-index:1;text-shadow:0 1px 4px rgba(0,0,0,0.5);"><div style="font-size:18px;margin-bottom:5px;">${escHtml(b.title)}</div><div style="font-size:12px;opacity:0.9;font-weight:normal;">${escHtml(b.subtitle || '')}</div></div>`;
+        }
+
+        function updateProductCatalog(products) {
+            if (!products.length) return;
+            // Replace entire catalog with API data
+            const newCatalog = {};
+            products.forEach(p => {
+                const id = p.productId || p.id;
+                newCatalog[id] = {
+                    id: id,
+                    title: p.title,
+                    price: typeof p.price === 'number' ? p.price.toFixed(2) : String(p.price || '0.00'),
+                    priceSuffix: p.priceSuffix || '',
+                    tag: p.tag || '',
+                    badge: p.badge || '',
+                    type: p.orderType || p.type || 'escort',
+                    cover: p.cover || '',
+                    intro: Array.isArray(p.introJson) ? p.introJson : [],
+                    notice: Array.isArray(p.noticeJson) ? p.noticeJson : [],
+                };
+            });
+            productCatalog = newCatalog;
+            renderProductGrid();
+        }
+
+        let hotProductIds = [];
+
+        function updateHotProducts(products) {
+            if (!products.length) return;
+            hotProductIds = [];
+            products.forEach(p => {
+                hotProductIds.push(p.productId);
+                const existing = productCatalog[p.productId];
+                productCatalog[p.productId] = {
+                    id: p.productId,
+                    title: p.title,
+                    price: p.price,
+                    tag: p.tag || '',
+                    cover: p.cover || '',
+                    badge: existing?.badge || '',
+                    type: existing?.type || 'escort',
+                    intro: existing?.intro || [],
+                    notice: existing?.notice || [],
+                };
+            });
+            renderProductGrid();
+        }
+
+        function updateTalents(data) {
+            if (!data.length) return;
+            const talentMap = {};
+            data.forEach(t => {
+                talentMap[t.talentId || t.id] = {
+                    id: t.talentId || t.id,
+                    name: t.name,
+                    type: t.typeLabel || t.genderTag || '男神',
+                    price: t.price,
+                    score: t.score,
+                    orders: t.ordersCount || t.orders || 0,
+                    voice: t.voiceStyle || '',
+                    service: t.serviceLabel || '',
+                    tags: Array.isArray(t.tagsJson) ? t.tagsJson : (typeof t.tagsJson === 'string' ? JSON.parse(t.tagsJson) : (t.tags || [])),
+                    bio: t.bio || '',
+                    img: 'f0f0f0',
+                };
+            });
+            talents = Object.values(talentMap);
+        }
+
+        function updateClubs(data) {
+            if (!data.length) return;
+            clubs = data.map(c => ({
+                name: c.name,
+                members: c.members + '人',
+                focus: c.focus || '',
+                desc: c.desc || '',
+                income: c.incomeText || '',
+            }));
+        }
+
+        function updateFaqs(data) {
+            if (!data.length) return;
+            supportFaqs = data.map(f => ({
+                q: f.question,
+                a: f.answer,
+            }));
+        }
+
+        function renderProductGrid() {
+            const grid = document.getElementById('hot-product-grid');
+            if (!grid) return;
+            const products = hotProductIds.length
+                ? hotProductIds.map(id => productCatalog[id]).filter(Boolean).slice(0, 4)
+                : Object.values(productCatalog).slice(0, 4);
+            grid.innerHTML = products.map(p => renderProductCard(p)).join('');
+        }
+
+        function goBack(fallback) {
+            if (currentPage === 'order-detail') {
+                const page = document.getElementById('orders-page');
+                const orig = page.getAttribute('data-orig');
+                if (orig) {
+                    page.innerHTML = orig;
+                    page.removeAttribute('data-orig');
+                }
+                renderOrders();
+                showPage('orders');
+                return;
+            }
+            const previous = pageHistory.pop();
+            if (previous) {
+                showPage(previous);
+                return;
+            }
+            switchTab(fallback || activeTab || 'home');
+        }
+
+        function getProductByKey(keyOrTitle) {
+            if (!keyOrTitle) return null;
+            if (productCatalog[keyOrTitle]) return productCatalog[keyOrTitle];
+            const normalizedTarget = String(keyOrTitle).replace(/\s+/g, '');
+            return Object.values(productCatalog).find(product => {
+                return product.title.replace(/\s+/g, '') === normalizedTarget;
+            }) || null;
+        }
+
+        function renderProductCard(product) {
+            const suffix = product.priceSuffix ? ` <span style="font-size:12px; color:#999; font-weight:normal;">${escHtml(product.priceSuffix)}</span>` : '';
+            return `
+                <div class="product-card" onclick="openDetail('${escHtml(product.id)}')">
+                    <img src="${escHtml(product.cover)}" class="product-img" alt="${escHtml(product.title)}">
+                    <div class="product-info">
+                        <div class="product-title">${escHtml(product.title)}</div>
+                        <div class="product-tags">${escHtml(product.tag)}</div>
+                        <div class="product-price">¥${escHtml(String(product.price))}${suffix}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderLineList(targetId, items, numbered) {
+            const container = document.getElementById(targetId);
+            if (!container) return;
+            container.innerHTML = items.map((item, index) => {
+                const prefix = numbered ? `${index + 1}. ` : '';
+                return `<p>${prefix}${item}</p>`;
+            }).join('');
+        }
+
+        async function openDetail(keyOrTitle, fallbackPrice) {
+            // Try local catalog first, then API
+            let product = getProductByKey(keyOrTitle);
+            if (!product && keyOrTitle && !fallbackPrice) {
+                try {
+                    const result = await requestAPI('/products/' + encodeURIComponent(keyOrTitle));
+                    if (result.data) {
+                        const p = result.data;
+                        product = {
+                            id: p.productId || p.id,
+                            title: p.title,
+                            price: typeof p.price === 'number' ? p.price.toFixed(2) : String(p.price || '0.00'),
+                            tag: p.tag || '',
+                            badge: p.badge || '平台服务',
+                            type: p.orderType || p.type || 'escort',
+                            cover: p.cover || '',
+                            intro: Array.isArray(p.intro) ? p.intro : (p.introJson ? JSON.parse(p.introJson) : []),
+                            notice: Array.isArray(p.notice) ? p.notice : (p.noticeJson ? JSON.parse(p.noticeJson) : []),
+                        };
+                        productCatalog[product.id] = product;
+                    }
+                } catch(e) { console.warn('API detail fetch failed:', e.message); }
+            }
+            if (!product) {
+                product = {
+                    id: 'custom',
+                    title: keyOrTitle,
+                    price: fallbackPrice || '0.00',
+                    tag: '平台服务',
+                    badge: '平台服务',
+                    type: 'escort',
+                    cover: '',
+                    intro: ['服务信息准备中，请稍后查看。'],
+                    notice: ['如需了解更多，请联系客服。']
+                };
+            }
+            currentProduct = product;
+            document.getElementById('detail-image').src = product.cover;
+            document.getElementById('detail-title').innerText = product.title;
+            document.getElementById('detail-price').innerText = product.price;
+            document.getElementById('detail-tagline').innerText = (product.badge || '平台服务') + ' · ' + (product.tag || '');
+            renderLineList('detail-intro', product.intro, true);
+            renderLineList('detail-notice', product.notice, false);
+            navigateTo('detail');
+        }
+
+        let pendingOrderNo = null;
+
+        async function handlePurchase() {
+            if (!currentProduct) {
+                showToast('请先选择服务');
+                return;
+            }
+            if (!authToken) {
+                showToast('请先登录...');
+                const ok = await mockLogin();
+                if (!ok) return;
+            }
+            try {
+                const order = await createOrder({
+                    productId: currentProduct.id,
+                    orderType: currentProduct.type || 'escort',
+                    quantity: 1,
+                });
+                pendingOrderNo = order.orderNo;
+                renderCheckout();
+                navigateTo('checkout');
+            } catch (e) {
+                showToast('创建订单失败: ' + e.message);
+            }
+        }
+
+        function renderCheckout() {
+            document.getElementById('checkout-title').innerText = currentProduct.title;
+            document.getElementById('checkout-tag').innerText = currentProduct.tag;
+            document.getElementById('checkout-price').innerText = currentProduct.price;
+            document.getElementById('pay-confirm-btn').innerText = `确认支付 ¥${currentProduct.price}`;
+            choosePayment(selectedPayment);
+        }
+
+        function choosePayment(method) {
+            selectedPayment = method;
+            document.querySelectorAll('.payment-option').forEach(item => {
+                item.classList.toggle('active', item.dataset.method === method);
+            });
+        }
+
+        async function confirmPayment() {
+            if (!currentProduct) {
+                showToast('未选择服务');
+                return;
+            }
+            if (!pendingOrderNo) {
+                showToast('订单信息丢失，请重新下单');
+                return;
+            }
+            const btn = document.getElementById('pay-confirm-btn');
+            btn.disabled = true;
+            btn.innerText = '支付中...';
+
+            // 支付宝: 跳转支付页面
+            if (selectedPayment === 'alipay') {
+                try {
+                    const result = await requestAPI('/payment/alipay/' + pendingOrderNo, {
+                        method: 'POST',
+                        body: JSON.stringify({ returnUrl: window.location.origin + '/app/1.html?paid=' + pendingOrderNo }),
+                    });
+                    const paymentUrl = result.data?.paymentUrl;
+                    if (paymentUrl) {
+                        // Save orderNo to check on return
+                        sessionStorage.setItem('pendingPayOrder', pendingOrderNo);
+                        pendingOrderNo = null;
+                        window.location.href = paymentUrl;
+                        return;
+                    }
+                    throw new Error('获取支付链接失败');
+                } catch (e) {
+                    showToast('支付失败: ' + (e.message || '支付宝暂不可用'));
+                    btn.disabled = false;
+                    renderCheckout();
+                    return;
+                }
+            }
+
+            // 微信支付 / 余额: 模拟支付
+            try {
+                const method = selectedPayment === 'wechat' ? 'wechat' : 'balance';
+                await payOrderAPI(pendingOrderNo, method);
+                pendingOrderNo = null;
+                showToast('支付成功！');
+                pageHistory = [activeTab];
+                await loadRealOrders(currentProduct.type || 'escort');
+                showPage('orders');
+                setOrderTab(currentProduct.type || 'escort');
+            } catch (e) {
+                showToast('支付失败: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                renderCheckout();
+            }
+        }
+
+        // Check if returning from Alipay payment
+        function checkAlipayReturn() {
+            const url = new URL(window.location.href);
+            const paidOrder = url.searchParams.get('paid');
+            const savedOrder = sessionStorage.getItem('pendingPayOrder');
+            const orderNo = paidOrder || savedOrder;
+            if (orderNo) {
+                sessionStorage.removeItem('pendingPayOrder');
+                // Clean URL
+                if (url.searchParams.has('paid')) {
+                    window.history.replaceState({}, '', '/app/1.html');
+                }
+                // Poll for payment status
+                pollPaymentStatus(orderNo);
+            }
+        }
+
+        async function pollPaymentStatus(orderNo) {
+            showToast('正在确认支付结果...');
+            for (let i = 0; i < 10; i++) {
+                try {
+                    const result = await requestAPI('/payment/status/' + orderNo);
+                    if (result.data?.status === 'paid') {
+                        showToast('支付成功！');
+                        await loadRealOrders(currentProduct.type || 'escort');
+                        showPage('orders');
+                        setOrderTab(currentProduct.type || 'escort');
+                        return;
+                    }
+                } catch (_) {}
+                await new Promise(r => setTimeout(r, 2000));
+            }
+            showToast('支付确认超时，请查看订单列表');
+            await loadRealOrders(currentProduct.type || 'escort');
+        }
+
+        async function loadRealOrders(type) {
+            currentOrderType = type || 'escort';
+            try {
+                const result = await requestAPI('/orders?pageSize=50');
+                if (result.data && result.data.list) {
+                    orderData[currentOrderType] = result.data.list.map(o => ({
+                        no: o.orderNo,
+                        title: o.title,
+                        amount: o.amount,
+                        status: statusLabel2(o.status),
+                        time: timeAgo2(o.createdAt),
+                        tip: o.paymentMethod ? '已支付(' + (o.paymentMethod === 'wechat' ? '微信' : o.paymentMethod === 'alipay' ? '支付宝' : o.paymentMethod) + ')' : '',
+                        productId: o.productId,
+                        orderType: o.orderType,
+                    }));
+                    renderOrders();
+                }
+            } catch (e) {
+                console.warn('加载订单失败', e.message);
+            }
+        }
+
+        function statusLabel2(s) {
+            const map = { pending_payment: '待支付', pending_assign: '待派单', assigned: '已接单', in_progress: '进行中', completed: '已完成', pending_shipment: '待发货', shipped: '已发货', canceled: '已取消' };
+            return map[s] || s;
+        }
+
+        function timeAgo2(ts) {
+            if (!ts) return '';
+            const d = new Date(), t = new Date(ts), m = Math.floor((d - t) / 60000);
+            if (m < 1) return '刚刚';
+            if (m < 60) return m + '分钟前';
+            const h = Math.floor(m / 60);
+            if (h < 24) return h + '小时前';
+            return Math.floor(h / 24) + '天前';
+        }
+
+        function openSearch() {
+            const input = document.getElementById('search-input');
+            if (input && !input.value.trim()) {
+                input.value = '地铁护航';
+            }
+            performSearch();
+            navigateTo('search');
+            setTimeout(() => {
+                if (input) input.focus();
+            }, 0);
+        }
+
+        function fillSearch(keyword) {
+            const input = document.getElementById('search-input');
+            input.value = keyword;
+            performSearch(keyword);
+            if (currentPage !== 'search') {
+                navigateTo('search');
+            }
+        }
+
+
+
+        async function performSearch(keyword) {
+            const input = document.getElementById('search-input');
+            const term = (keyword !== undefined ? keyword : input.value).trim() || '地铁';
+            input.value = term;
+
+            let productResults = [];
+            let talentResults = [];
+
+            // 尝试API搜索
+            try {
+                const apiResult = await performSearchAPI(term);
+                if (apiResult) {
+                    productResults = (apiResult.products || []).map(p => ({
+                        id: p.productId || p.id,
+                        title: p.title,
+                        price: p.price,
+                        tag: p.tag || '',
+                        cover: p.cover || '',
+                        badge: p.badge || '',
+                    }));
+                    talentResults = (apiResult.talents || []).map(t => ({
+                        id: t.talentId || t.id,
+                        name: t.name,
+                        type: t.typeLabel || t.genderTag || '男神',
+                        price: t.price,
+                        score: t.score,
+                        orders: t.ordersCount || t.orders || 0,
+                        voice: t.voiceStyle || '',
+                        service: t.serviceLabel || '',
+                        tags: Array.isArray(t.tagsJson) ? t.tagsJson : (typeof t.tagsJson === 'string' ? JSON.parse(t.tagsJson) : (t.tags || [])),
+                        bio: t.bio || '',
+                    }));
+                }
+            } catch (e) {
+                // 回退到本地搜索 (仅使用 API 已加载的数据)
+                const catProducts = Object.values(productCatalog);
+                productResults = catProducts.length
+                    ? catProducts.filter(product => {
+                        return [product.title, product.tag, product.badge].some(text => text && text.includes(term));
+                      })
+                    : [];
+                talentResults = talents.length
+                    ? talents.filter(talent => {
+                        return [talent.name, talent.type, talent.voice, talent.service, ...(talent.tags||[])].some(text => text && text.includes(term));
+                      })
+                    : [];
+            }
+
+            const container = document.getElementById('search-results');
+            let html = '';
+
+            if (productResults.length) {
+                html += productResults.slice(0, 4).map(renderProductCard).join('');
+            }
+
+            if (talentResults.length) {
+                html += '<div class=”section-title”>相关大神</div>';
+                html += talentResults.slice(0, 4).map(talent => {
+                    return `<div class=”club-card” onclick=”openTalentDetail('${escHtml(talent.id)}')”><div class=”club-head”><div><div class=”club-title”>${escHtml(talent.name)}</div><div class=”meta-text”>${escHtml(talent.type)} · ${escHtml(talent.voice)} · ${escHtml(talent.service)}</div></div><div style=”color:#FF4444; font-weight:700;”>¥${escHtml(String(talent.price))}</div></div><div class=”club-desc”>${escHtml(talent.bio)}</div><div class=”club-meta”><span>评分 ${escHtml(String(talent.score))}</span><span>订单 ${escHtml(String(talent.orders))}</span></div></div>`;
+                }).join('');
+            }
+
+            if (!productResults.length && !talentResults.length) {
+                html = `<div class=”empty-state”>没有找到和 “${term}” 相关的结果，换个关键词试试。</div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        async function openSection(sectionKey) {
+            const section = sectionData[sectionKey];
+            // 尝试从API加载专区数据
+            try {
+                const result = await requestAPI(`/sections/${sectionKey}`);
+                if (result.data) {
+                    const sec = result.data;
+                    const displayTitle = section?.title || sec.title || sectionKey;
+                    document.getElementById('section-page-title').innerText = displayTitle;
+                    document.getElementById('section-hero-title').innerText = displayTitle;
+                    document.getElementById('section-hero-subtitle').innerText = section?.subtitle || sec.subtitle || '';
+                    if (section) document.getElementById('section-hero').style.background = section.theme;
+                    if (section) {
+                        document.getElementById('section-quick-links').innerHTML = section.quickLinks.map(item => {
+                            return `<div class="quick-link" onclick="${item.action}">${item.label}</div>`;
+                        }).join('');
+                    }
+                    document.getElementById('section-products').innerHTML = (sec.products || []).map(p => {
+                        const prod = p.productId ? p : productCatalog[p];
+                        return prod ? renderProductCard(prod) : '';
+                    }).join('');
+                    navigateTo('section');
+                    return;
+                }
+            } catch (e) {
+                console.warn('专区API加载失败，使用本地数据');
+            }
+            // 回退到本地数据
+            const section = sectionData[sectionKey];
+            if (!section) return;
+            document.getElementById('section-page-title').innerText = section.title;
+            document.getElementById('section-hero-title').innerText = section.title;
+            document.getElementById('section-hero-subtitle').innerText = section.subtitle;
+            document.getElementById('section-hero').style.background = section.theme;
+            document.getElementById('section-products').innerHTML = section.products.map(key => {
+                return renderProductCard(productCatalog[key]);
+            }).join('');
+            document.getElementById('section-quick-links').innerHTML = section.quickLinks.map(item => {
+                return `<div class="quick-link" onclick="${item.action}">${item.label}</div>`;
+            }).join('');
+            navigateTo('section');
+        }
+
+        function renderTalentList() {
+            const container = document.getElementById('talent-list');
+            const visibleTalents = currentTalentFilter === '全部'
+                ? talents
+                : talents.filter(talent => talent.type === currentTalentFilter);
+
+            if (!visibleTalents.length) {
+                container.innerHTML = '<div class="empty-state" style="grid-column:1 / -1;">当前筛选下没有可预约大神。</div>';
+                return;
+            }
+
+            container.innerHTML = visibleTalents.map(talent => {
+                return `
+                    <div class="talent-card" onclick="openTalentDetail('${escHtml(talent.id)}')">
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27300%27 height=%27200%27%3E%3Crect fill=%27%23e8edf2%27 width=%27300%27 height=%27200%27/%3E%3Ctext x=%27150%27 y=%27110%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-size=%2718%27 fill=%27%2396a8c0%27%3E9100%3C/text%3E%3C/svg%3E" class="talent-img" alt="${escHtml(talent.name)}">
+                        <div class="talent-info">
+                            <div class="talent-name">${escHtml(talent.name)}</div>
+                            <div class="product-tags">${escHtml(talent.type)} · ¥${escHtml(String(talent.price))} · ${escHtml(talent.service)}</div>
+                        </div>
+                        <div class="voice-btn"><i class="fas fa-volume-up"></i></div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterTalent(el) {
+            currentTalentFilter = el.innerText.trim();
+            document.querySelectorAll('#select-page .tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            el.classList.add('active');
+            renderTalentList();
+        }
+
+        function openTalentDetail(talentId) {
+            const talent = talents.find(item => item.id === talentId);
+            if (!talent) return;
+            currentTalent = talent;
+            document.getElementById('talent-detail-image').src = 'data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27300%27%20height=%27200%27%3E%3Crect%20fill=%27%23e8edf2%27%20width=%27300%27%20height=%27200%27/%3E%3Ctext%20x=%27150%27%20y=%27110%27%20text-anchor=%27middle%27%20font-family=%27sans-serif%27%20font-size=%2718%27%20fill=%27%2396a8c0%27%3E9100%3C/text%3E%3C/svg%3E';
+            document.getElementById('talent-detail-name').innerText = talent.name;
+            document.getElementById('talent-detail-meta').innerText = `${talent.type} · ${talent.voice} · ${talent.service}`;
+            document.getElementById('talent-detail-tags').innerHTML = talent.tags.map(tag => `<span class="tag-pill">${escHtml(tag)}</span>`).join('');
+            document.getElementById('talent-score').innerText = talent.score;
+            document.getElementById('talent-orders').innerText = talent.orders;
+            document.getElementById('talent-price').innerText = talent.price;
+            document.getElementById('talent-detail-bio').innerText = talent.bio;
+            navigateTo('talent-detail');
+        }
+
+        function bookTalent() {
+            if (!currentTalent) {
+                showToast('请先选择大神');
+                return;
+            }
+            currentProduct = {
+                id: `talent-${currentTalent.id}`,
+                title: `${currentTalent.name} 专属陪玩`,
+                price: currentTalent.price,
+                tag: `${currentTalent.type} · ${currentTalent.voice}`,
+                badge: '陪玩预约',
+                type: 'escort',
+                cover: 'data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27300%27%20height=%27200%27%3E%3Crect%20fill=%27%23e8edf2%27%20width=%27300%27%20height=%27200%27/%3E%3Ctext%20x=%27150%27%20y=%27110%27%20text-anchor=%27middle%27%20font-family=%27sans-serif%27%20font-size=%2718%27%20fill=%27%2396a8c0%27%3E9100%3C/text%3E%3C/svg%3E',
+                intro: ['支持语音连麦和娱乐陪玩场景。',
+                    '高峰时段若本人离线，将由客服二次确认。'
+                ],
+                notice: ['预约后请保持联系方式畅通。', '如需指定时间段，请先和客服确认。']
+            };
+            renderCheckout();
+            navigateTo('checkout');
+        }
+
+        function renderClubList() {
+            const container = document.getElementById('club-list');
+            container.innerHTML = clubs.map(club => {
+                return `
+                    <div class="club-card">
+                        <div class="club-head">
+                            <div>
+                                <div class="club-title">${escHtml(club.name)}</div>
+                                <div class="meta-text">${escHtml(club.focus)}</div>
+                            </div>
+                            <button class="btn btn-outline btn-compact" onclick="joinClub('${escHtml(club.name)}')">申请加入</button>
+                        </div>
+                        <div class="club-desc">${escHtml(club.desc)}</div>
+                        <div class="club-meta">
+                            <span><i class="fas fa-user-friends"></i> ${escHtml(club.members)}</span>
+                            <span><i class="fas fa-bolt"></i> ${escHtml(club.income)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function joinClub(name) {
+            showToast(`已提交加入 ${name}`);
+        }
+
+        function setOrderTab(type) {
+            document.querySelectorAll('#orders-page .tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.type === type);
+            });
+        }
+
+        function renderOrders() {
+            const orders = orderData[currentOrderType] || [];
+            const container = document.getElementById('orders-list');
+            if (!orders.length) {
+                container.innerHTML = '<div class="empty-state">暂无订单记录</div>';
+                return;
+            }
+            container.innerHTML = orders.map(order => {
+                const stClass = (order.status === '已完成' || order.status === 'completed') ? 'order-status-done' : 'order-status';
+                return `
+                    <div class="order-card" onclick="viewOrderDetail('${escHtml(order.no)}')">
+                        <div class="order-top">
+                            <div>
+                                <div style="font-size:15px; font-weight:700; color:#333;">${escHtml(order.title)}</div>
+                                <div class="order-meta">订单号 ${escHtml(order.no)}</div>
+                            </div>
+                            <div class="${stClass}">${escHtml(order.status)}</div>
+                        </div>
+                        <div style="font-size:14px; color:#666;">金额 ¥${escHtml(String(order.amount))}</div>
+                        <div class="order-meta">${escHtml(order.time)}</div>
+                        <div class="order-meta">${escHtml(order.tip)}</div>
+                        <div style="margin-top:14px;">${order.productId ? `<button class="btn btn-outline btn-compact" onclick="event.stopPropagation();reorder('${escHtml(order.productId)}')">再来一单</button>` : ''}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openOrders(type) {
+            currentOrderType = type;
+            setOrderTab(type);
+            loadRealOrders(type);
+        }
+
+        function switchOrderType(type) {
+            currentOrderType = type;
+            setOrderTab(type);
+            loadRealOrders(type);
+        }
+
+        function reorder(productId) {
+            if (!productId) {
+                showToast('该订单暂不支持再次下单');
+                return;
+            }
+            openDetail(productId);
+        }
+
+        async function viewOrderDetail(orderNo) {
+            try {
+                const result = await requestAPI('/orders/' + orderNo);
+                const o = result.data;
+                const stMap = { pending_payment: '待支付', pending_assign: '待派单', assigned: '已接单', in_progress: '进行中', completed: '已完成', pending_shipment: '待发货', shipped: '已发货', canceled: '已取消' };
+                const typeMap = { escort: '游戏陪玩', boost: '极速上分', coaching: '教学指导', gear: '装备交易', playmate: '专属陪玩' };
+                const pmMap = { wechat: '微信支付', alipay: '支付宝', balance: '余额支付' };
+                const detailHTML = `
+                    <div class="nav-bar">
+                        <i class="fas fa-arrow-left back-btn" onclick="goBack('orders')"></i>
+                        <span class="title">订单详情</span>
+                    </div>
+                    <div class="info-card">
+                        <div style="font-size:18px; font-weight:700; margin-bottom:8px;">${escHtml(o.title || '订单')}</div>
+                        <div style="color:#FF6600; font-size:28px; font-weight:700; margin-bottom:12px;">¥${escHtml(String(o.amount))}</div>
+                        <div class="meta-text">订单号: ${escHtml(o.orderNo)}</div>
+                        <div class="meta-text">类型: ${escHtml(typeMap[o.orderType] || o.orderType)}</div>
+                        <div class="meta-text">状态: ${escHtml(stMap[o.status] || o.status)}</div>
+                        <div class="meta-text">支付方式: ${escHtml(pmMap[o.paymentMethod] || '未支付')}</div>
+                        <div class="meta-text">创建时间: ${new Date(o.createdAt).toLocaleString()}</div>
+                        ${o.paidAt ? `<div class="meta-text">支付时间: ${new Date(o.paidAt).toLocaleString()}</div>` : ''}
+                        ${o.completedAt ? `<div class="meta-text">完成时间: ${new Date(o.completedAt).toLocaleString()}</div>` : ''}
+                        ${o.remark ? `<div class="meta-text">备注: ${escHtml(o.remark)}</div>` : ''}
+                    </div>
+                `;
+                const page = document.getElementById('orders-page');
+                const origHTML = page.innerHTML;
+                page.setAttribute('data-orig', origHTML);
+                page.innerHTML = detailHTML;
+                page.classList.add('active');
+                currentPage = 'order-detail';
+            } catch (e) {
+                showToast('加载订单详情失败');
+            }
+        }
+
+        function openPartner() {
+            navigateTo('partner');
+        }
+
+        function submitPartnerApplication() {
+            const name = document.getElementById('partner-name').value.trim();
+            const game = document.getElementById('partner-game').value.trim();
+            if (!name || !game) {
+                showToast('请先填写昵称和擅长项目');
+                return;
+            }
+            showToast('报名信息已提交，客服会尽快联系你');
+            document.getElementById('partner-note').value = '';
+        }
+
+        function openSupport() {
+            navigateTo('support');
+        }
+
+        function renderSupportFaqs() {
+            const container = document.getElementById('support-faq-list');
+            container.innerHTML = supportFaqs.map(item => {
+                return `
+                    <div class="faq-item">
+                        <div class="faq-question">${escHtml(item.q)}</div>
+                        <div class="faq-answer">${escHtml(item.a)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openBusiness() {
+            navigateTo('business');
+        }
+
+        function submitBusinessForm() {
+            const company = document.getElementById('business-company').value.trim();
+            const contact = document.getElementById('business-contact').value.trim();
+            if (!company || !contact) {
+                showToast('请先填写公司名称和联系方式');
+                return;
+            }
+            showToast('合作意向已提交，商务会尽快联系你');
+        }
+
+        function escHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.display = 'block';
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.style.display = 'none';
+            }, 2200);
+        }
+
+        function showLoading(msg) {
+            const overlay = document.getElementById('loading-overlay');
+            const text = document.getElementById('loading-text');
+            if (text && msg) text.innerText = msg;
+            if (overlay) overlay.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) overlay.style.display = 'none';
+        }
+
+        // 全局网络错误处理
+        window.addEventListener('unhandledrejection', function(event) {
+            const reason = event.reason;
+            if (reason && reason.message && (reason.message.includes('fetch') || reason.message.includes('NetworkError'))) {
+                showToast('网络连接失败，请检查网络后重试');
+            }
+        });
+</script>
+
+</body>
+</html>

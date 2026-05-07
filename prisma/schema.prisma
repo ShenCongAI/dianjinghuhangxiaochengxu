@@ -1,0 +1,238 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  nickname    String
+  avatar      String?
+  mobile      String?  @unique
+  password    String?
+  status      String   @default("normal")
+  totalSpend  Float    @default(0)
+  registerAt  DateTime @default(now())
+  lastLoginAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orders              Order[]
+  tickets             Ticket[]
+  partnerApplications PartnerApplication[]
+  notes               UserNote[]
+}
+
+model UserNote {
+  id        Int      @id @default(autoincrement())
+  content   String
+  operator  String   @default("系统")
+  createdAt DateTime @default(now())
+  userId    Int
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Product {
+  id          String   @id
+  title       String
+  category    String
+  orderType   String
+  price       Float
+  priceSuffix String?
+  tag         String?
+  badge       String?
+  cover       String?
+  status      String   @default("online")
+  introJson   String?
+  noticeJson  String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orders      Order[]
+}
+
+model Talent {
+  id                 String   @id
+  name               String
+  typeLabel          String
+  status             String   @default("offline")
+  price              Float
+  mobile             String?
+  passwordHash       String?
+  score              Float    @default(0)
+  ordersCount        Int      @default(0)
+  voiceStyle         String?
+  serviceLabel       String?
+  tagsJson           String?
+  bio                String?
+  completionRate     Float?
+  avgResponseMinutes Float?
+  todayOrders        Int      @default(0)
+  pendingSettlement  Float    @default(0)
+  complaints         Int      @default(0)
+  cover              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  orders             Order[]
+  settlements        Settlement[]
+  withdrawals        Withdrawal[]
+}
+
+model Order {
+  id            Int      @id @default(autoincrement())
+  orderNo       String   @unique
+  orderType     String
+  status        String
+  title         String
+  amount        Float
+  quantity      Int      @default(1)
+  paymentMethod String?
+  remark        String?
+  scheduleAt    DateTime?
+  createdAt     DateTime @default(now())
+  paidAt        DateTime?
+  completedAt   DateTime?
+  userId        Int
+  productId     String?
+  talentId      String?
+
+  user          User        @relation(fields: [userId], references: [id])
+  product       Product?    @relation(fields: [productId], references: [id])
+  talent        Talent?     @relation(fields: [talentId], references: [id])
+  tickets       Ticket[]
+  refunds       Refund[]
+  statusLogs    OrderStatusLog[]
+}
+
+model Ticket {
+  id           Int      @id @default(autoincrement())
+  ticketNo     String   @unique
+  type         String
+  status       String   @default("open")
+  content      String
+  attachments  String?
+  operatorNote String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  userId       Int
+  orderId      Int?
+
+  user         User      @relation(fields: [userId], references: [id])
+  order        Order?    @relation(fields: [orderId], references: [id])
+}
+
+model Refund {
+  id           Int      @id @default(autoincrement())
+  refundNo     String   @unique
+  status       String   @default("pending")
+  refundAmount Float
+  reason       String
+  comment      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  orderId      Int
+
+  order        Order    @relation(fields: [orderId], references: [id])
+}
+
+model PartnerApplication {
+  id        Int      @id @default(autoincrement())
+  status    String   @default("pending")
+  name      String
+  specialty String
+  note      String?
+  contact   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    Int
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model BusinessLead {
+  id          Int      @id @default(autoincrement())
+  companyName String
+  contact     String
+  note        String
+  createdAt   DateTime @default(now())
+}
+
+model Settlement {
+  id           Int      @id @default(autoincrement())
+  settlementNo String   @unique
+  amount       Float
+  status       String   @default("pending")
+  paidAt       DateTime?
+  createdAt    DateTime @default(now())
+  talentId     String
+
+  talent       Talent   @relation(fields: [talentId], references: [id])
+}
+
+model Withdrawal {
+  id           Int      @id @default(autoincrement())
+  withdrawalNo String   @unique
+  amount       Float
+  status       String   @default("pending")
+  comment      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  talentId     String
+
+  talent       Talent   @relation(fields: [talentId], references: [id])
+}
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  account      String   @unique
+  passwordHash String
+  name         String
+  roleCode     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model OrderStatusLog {
+  id      Int      @id @default(autoincrement())
+  orderId Int
+  status  String
+  time    DateTime @default(now())
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Banner {
+  id        Int      @id @default(autoincrement())
+  title     String
+  subtitle  String?
+  image     String
+  linkType  String   @default("section")
+  linkValue String
+  sortOrder Int      @default(0)
+  status    String   @default("online")
+  createdAt DateTime @default(now())
+}
+
+model Club {
+  id         Int      @id @default(autoincrement())
+  name       String
+  members    Int      @default(0)
+  focus      String?
+  incomeText String?
+  desc       String?
+  status     String   @default("online")
+  createdAt  DateTime @default(now())
+}
+
+model FAQ {
+  id        Int      @id @default(autoincrement())
+  question  String
+  answer    String
+  sortOrder Int      @default(0)
+  status    String   @default("online")
+}

@@ -1,0 +1,51 @@
+{
+  "name": "esports-9100-backend",
+  "version": "1.0.0",
+  "description": "9100 Esports backend MVP built with NestJS + Prisma + JWT.",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "start:dev": "node --watch -r ts-node/register -r tsconfig-paths/register src/main.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "check": "tsc -p tsconfig.build.json --noEmit"
+  },
+  "keywords": [
+    "nestjs",
+    "prisma",
+    "jwt",
+    "mvp"
+  ],
+  "author": "OpenAI Codex",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "@nestjs/common": "^11.1.19",
+    "@nestjs/config": "^4.0.4",
+    "@nestjs/core": "^11.1.19",
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/passport": "^11.0.5",
+    "@nestjs/platform-express": "^11.1.19",
+    "@nestjs/swagger": "^11.4.2",
+    "@prisma/client": "^6.16.0",
+    "bcrypt": "^6.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/node": "^25.6.0",
+    "@types/passport-jwt": "^4.0.1",
+    "prisma": "^6.16.0",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}
