@@ -440,6 +440,42 @@
         </div>
     </div>
 
+    <!-- ====== TALENT MODAL ====== -->
+    <div class="modal-overlay" id="talentModal">
+        <div class="modal-box" style="max-width:600px;">
+            <h3 id="talentModalTitle">新增大神</h3>
+            <div class="field"><label>名称</label><input id="tName" placeholder="大神名称"></div>
+            <div class="field"><label>类型</label><select id="tTypeLabel"><option value="男神">男神</option><option value="女神">女神</option></select></div>
+            <div class="field"><label>状态</label><select id="tStatus"><option value="online">在线</option><option value="busy">忙碌</option><option value="offline">离线</option><option value="reviewing">审核中</option></select></div>
+            <div class="field"><label>价格</label><input id="tPrice" type="number" step="0.01" placeholder="0.00"></div>
+            <div class="field"><label>评分</label><input id="tScore" type="number" step="0.1" value="5.0"></div>
+            <div class="field"><label>服务标签</label><input id="tServiceLabel" placeholder="如：技术流、教学、复盘"></div>
+            <div class="field"><label>标签 (JSON数组)</label><input id="tTags" placeholder='["技术流","教学"]'></div>
+            <div class="field"><label>简介</label><textarea id="tBio" placeholder="个人简介"></textarea></div>
+            <div class="field"><label>头像URL</label>
+                <div class="upload-area" onclick="document.getElementById('tFileInput').click()">
+                    <span class="upload-placeholder" id="tPlaceholder">点击上传头像</span>
+                    <input type="file" id="tFileInput" accept="image/*" onchange="handleFilePick('tFileInput','tPreview')">
+                    <img id="tPreview" class="upload-preview">
+                </div>
+                <input id="tCover" placeholder="或手动输入图片URL" style="margin-top:8px;">
+            </div>
+            <div class="field"><label>嗓音音频</label>
+                <div class="upload-area" onclick="document.getElementById('tVoiceFileInput').click()">
+                    <span class="upload-placeholder" id="tVoicePlaceholder">点击上传嗓音音频</span>
+                    <input type="file" id="tVoiceFileInput" accept="audio/*" onchange="handleFilePick('tVoiceFileInput','tVoicePreview')">
+                    <audio id="tVoicePreview" class="upload-preview" controls style="display:none;width:100%;margin-top:8px;"></audio>
+                </div>
+                <input id="tVoiceStyle" placeholder="或输入嗓音描述文字：如青年音、御姐音" style="margin-top:8px;">
+            </div>
+            <div class="field"><label>手机号</label><input id="tMobile" placeholder="选填"></div>
+            <div class="btn-row">
+                <button class="button soft" onclick="closeTalentModal()">取消</button>
+                <button class="button primary" onclick="saveTalent()">保存</button>
+            </div>
+        </div>
+    </div>
+
     <div class="toast" id="toast">操作已触发</div>
 
     <script>
@@ -501,9 +537,15 @@
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     const base64 = e.target.result;
-                    const img = document.getElementById(previewId);
-                    img.src = base64;
-                    img.style.display = 'block';
+                    const previewEl = document.getElementById(previewId);
+                    if (previewEl) {
+                        if (previewEl.tagName === 'AUDIO') {
+                            previewEl.src = base64;
+                        } else {
+                            previewEl.src = base64;
+                        }
+                        previewEl.style.display = 'block';
+                    }
                     try {
                         document.getElementById(previewId.replace('Preview','Placeholder')).style.display = 'none';
                     } catch(_) {}
@@ -880,6 +922,7 @@
                 const data = await api('/talents?' + params.toString());
                 document.getElementById('navTipTalents').textContent = data.pagination.total + '人';
                 document.getElementById('talentFilters').innerHTML = `
+                    <button class="button primary sm" onclick="openTalentModal()">+ 新增大神</button>
                     <button class="action-chip" onclick="loadTalents()">全部</button>
                     <button class="action-chip" onclick="loadTalents('online')">在线</button>
                     <button class="action-chip" onclick="loadTalents('busy')">忙碌</button>
@@ -898,12 +941,96 @@
                         <div style="margin:10px 0;color:var(--muted);font-size:12px;">评分 ${t.score} · 完成率 ${t.completionRate}% · 响应 ${t.avgResponseMinutes}分钟 · 今日${t.todayOrders}单</div>
                         <div class="chip-row">${tags.map(tg => `<span class="chip">${tg}</span>`).join('')} <span class="chip gray">¥${Number(t.price).toFixed(2)}</span></div>
                         <div style="margin-top:10px;display:flex;gap:8px;">
-                            <button class="button sm soft" onclick="viewTalentDetail('${t.id}')">详情</button>
+                            <button class="button sm soft" onclick="editTalent('${t.id}')">编辑</button>
                             <button class="button sm soft" onclick="changeTalentStatus('${t.id}','${t.status==='online'?'offline':'online'}')">${t.status==='online'?'下线':'上线'}</button>
+                            <button class="button sm danger" onclick="deleteTalent('${t.id}')">删除</button>
                         </div>
                     </div>`;
                 }).join('');
             } catch (e) { toast('加载大神失败: ' + e.message); }
+        }
+
+        function openTalentModal(talent) {
+            document.getElementById('talentModal').classList.add('show');
+            document.getElementById('talentModalTitle').textContent = talent ? '编辑大神' : '新增大神';
+            document.getElementById('tName').value = talent ? talent.name : '';
+            document.getElementById('tTypeLabel').value = talent ? talent.typeLabel : '男神';
+            document.getElementById('tStatus').value = talent ? talent.status : 'offline';
+            document.getElementById('tPrice').value = talent ? Number(talent.price).toFixed(2) : '';
+            document.getElementById('tScore').value = talent ? talent.score : '5.0';
+            document.getElementById('tVoiceStyle').value = talent ? (talent.voiceStyle||'') : '';
+            document.getElementById('tServiceLabel').value = talent ? (talent.serviceLabel||'') : '';
+            document.getElementById('tTags').value = talent ? (Array.isArray(talent.tagsJson) ? JSON.stringify(talent.tagsJson) : (talent.tagsJson||'[]')) : '[]';
+            document.getElementById('tBio').value = talent ? (talent.bio||'') : '';
+            document.getElementById('tCover').value = talent ? (talent.cover||'') : '';
+            document.getElementById('tMobile').value = talent ? (talent.mobile||'') : '';
+            const fi = document.getElementById('tFileInput');
+            fi.value = ''; fi.dataset.uploaded = '';
+            document.getElementById('tPreview').style.display = 'none';
+            document.getElementById('tPlaceholder').style.display = '';
+            const vfi = document.getElementById('tVoiceFileInput');
+            vfi.value = ''; vfi.dataset.uploaded = '';
+            document.getElementById('tVoicePreview').style.display = 'none';
+            document.getElementById('tVoicePlaceholder').style.display = '';
+            if (talent && talent.cover && !talent.cover.includes('data:image')) {
+                document.getElementById('tPreview').src = talent.cover;
+                document.getElementById('tPreview').style.display = 'block';
+                document.getElementById('tPlaceholder').style.display = 'none';
+            }
+            window._editingTalentId = talent ? talent.id : null;
+        }
+        function closeTalentModal() { document.getElementById('talentModal').classList.remove('show'); }
+
+        async function saveTalent() {
+            await Promise.all([waitForUpload('tFileInput'), waitForUpload('tVoiceFileInput')]);
+            const uploadedUrl = getUploadedUrl('tFileInput');
+            const manualUrl = document.getElementById('tCover').value.trim();
+            const coverUrl = uploadedUrl || manualUrl;
+            const uploadedVoiceUrl = getUploadedUrl('tVoiceFileInput');
+            const manualVoice = document.getElementById('tVoiceStyle').value.trim();
+            const voiceStyle = uploadedVoiceUrl || manualVoice;
+            let tags = [];
+            try { tags = JSON.parse(document.getElementById('tTags').value); } catch(_) {}
+            const body = {
+                name: document.getElementById('tName').value,
+                typeLabel: document.getElementById('tTypeLabel').value,
+                status: document.getElementById('tStatus').value,
+                price: parseFloat(document.getElementById('tPrice').value)||0,
+                score: parseFloat(document.getElementById('tScore').value)||5,
+                voiceStyle,
+                serviceLabel: document.getElementById('tServiceLabel').value,
+                tags,
+                bio: document.getElementById('tBio').value,
+                cover: coverUrl,
+                mobile: document.getElementById('tMobile').value,
+            };
+            try {
+                if (window._editingTalentId) {
+                    await api('/talents/' + window._editingTalentId, { method:'PUT', body:JSON.stringify(body) });
+                } else {
+                    await api('/talents', { method:'POST', body:JSON.stringify(body) });
+                }
+                toast(window._editingTalentId ? '大神已更新' : '大神已创建');
+                closeTalentModal();
+                loadTalents();
+            } catch (e) { toast('保存失败: ' + e.message); }
+        }
+
+        async function editTalent(id) {
+            try {
+                const data = await api('/talents?pageSize=50');
+                const t = data.list.find(x => x.id === id);
+                if (t) openTalentModal(t);
+            } catch (e) { toast('获取大神信息失败'); }
+        }
+
+        async function deleteTalent(id) {
+            if (!confirm('确定删除此大神？')) return;
+            try {
+                await api('/talents/' + id, { method:'DELETE' });
+                toast('大神已删除');
+                loadTalents();
+            } catch (e) { toast('删除失败: ' + e.message); }
         }
 
         async function viewTalentDetail(id) {

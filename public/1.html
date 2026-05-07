@@ -1572,8 +1572,11 @@ const API_BASE = window.location.origin + '/api/v1/app';
                 const imgTag = talent.cover
                     ? `<div ${imgStyle}></div>`
                     : `<img src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27300%27 height=%27200%27%3E%3Crect fill=%27%23e8edf2%27 width=%27300%27 height=%27200%27/%3E%3Ctext x=%27150%27 y=%27110%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-size=%2718%27 fill=%27%2396a8c0%27%3E9100%3C/text%3E%3C/svg%3E" class="talent-img" alt="${escHtml(talent.name)}">`;
+                const isVoiceUrl = talent.voice && (talent.voice.startsWith('/uploads/') || talent.voice.startsWith('http'));
                 const voiceBtn = talent.voice
-                    ? `<div class="voice-btn" onclick="event.stopPropagation();showToast('嗓音: ${escHtml(talent.voice)}')"><i class="fas fa-volume-up"></i></div>`
+                    ? (isVoiceUrl
+                        ? `<div class="voice-btn" onclick="event.stopPropagation();playVoiceSample('${escHtml(talent.voice)}')"><i class="fas fa-volume-up"></i></div>`
+                        : `<div class="voice-btn" onclick="event.stopPropagation();showToast('嗓音: ${escHtml(talent.voice)}')"><i class="fas fa-volume-up"></i></div>`)
                     : '';
                 return `
                     <div class="talent-card" onclick="openTalentDetail('${escHtml(talent.id)}')">
@@ -1603,7 +1606,8 @@ const API_BASE = window.location.origin + '/api/v1/app';
             currentTalent = talent;
             document.getElementById('talent-detail-image').src = talent.cover || 'data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27300%27%20height=%27200%27%3E%3Crect%20fill=%27%23e8edf2%27%20width=%27300%27%20height=%27200%27/%3E%3Ctext%20x=%27150%27%20y=%27110%27%20text-anchor=%27middle%27%20font-family=%27sans-serif%27%20font-size=%2718%27%20fill=%27%2396a8c0%27%3E9100%3C/text%3E%3C/svg%3E';
             document.getElementById('talent-detail-name').innerText = talent.name;
-            document.getElementById('talent-detail-meta').innerHTML = `${escHtml(talent.type)} · <span style="color:#FF9900;cursor:pointer" onclick="event.stopPropagation();showToast('嗓音: ${escHtml(talent.voice || '暂无')}')"><i class="fas fa-volume-up"></i> ${escHtml(talent.voice || '暂无')}</span> · ${escHtml(talent.service)}`;
+            const isVoiceUrl = talent.voice && (talent.voice.startsWith('/uploads/') || talent.voice.startsWith('http'));
+            document.getElementById('talent-detail-meta').innerHTML = `${escHtml(talent.type)} · <span style="color:#FF9900;cursor:pointer" onclick="event.stopPropagation();${isVoiceUrl ? `playVoiceSample('${escHtml(talent.voice)}')` : `showToast('嗓音: ${escHtml(talent.voice || '暂无')}')`}"><i class="fas fa-volume-up"></i> ${escHtml(talent.voice || '暂无')}</span> · ${escHtml(talent.service)}`;
             document.getElementById('talent-detail-tags').innerHTML = talent.tags.map(tag => `<span class="tag-pill">${escHtml(tag)}</span>`).join('');
             document.getElementById('talent-score').innerText = talent.score;
             document.getElementById('talent-orders').innerText = talent.orders;
@@ -1864,6 +1868,11 @@ const API_BASE = window.location.origin + '/api/v1/app';
             } catch (e) {
                 showToast('提交失败: ' + (e.message || '网络异常'));
             }
+        }
+
+        function playVoiceSample(url) {
+            const audio = new Audio(url.startsWith('http') ? url : window.location.origin + url);
+            audio.play().catch(e => showToast('播放失败: ' + e.message));
         }
 
         function escHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }

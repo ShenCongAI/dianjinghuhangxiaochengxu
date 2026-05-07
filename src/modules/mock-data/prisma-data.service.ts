@@ -1569,6 +1569,52 @@ export class PrismaDataService {
     });
   }
 
+  async createTalent(payload: Record<string, unknown>) {
+    const name = (payload.name as string) ?? '';
+    if (!name.trim()) throw new BadRequestException('大神名称不能为空');
+    const id = this.slugify(name) + '-' + Date.now();
+    return this.prisma.talent.create({
+      data: {
+        id,
+        name,
+        typeLabel: (payload.typeLabel as string) ?? '男神',
+        status: (payload.status as string) ?? 'offline',
+        price: Number(payload.price ?? 0),
+        score: Number(payload.score ?? 5),
+        voiceStyle: (payload.voiceStyle as string) ?? '',
+        serviceLabel: (payload.serviceLabel as string) ?? '',
+        tagsJson: JSON.stringify(payload.tags ?? []),
+        bio: (payload.bio as string) ?? '',
+        cover: (payload.cover as string) ?? '',
+        mobile: (payload.mobile as string) ?? null,
+      },
+    });
+  }
+
+  async updateTalent(talentId: string, payload: Record<string, unknown>) {
+    const talent = await this.prisma.talent.findUnique({ where: { id: talentId } });
+    if (!talent) throw new NotFoundException('talent not found');
+    const data: any = {};
+    if (payload.name !== undefined) data.name = payload.name;
+    if (payload.typeLabel !== undefined) data.typeLabel = payload.typeLabel;
+    if (payload.price !== undefined) data.price = Number(payload.price);
+    if (payload.score !== undefined) data.score = Number(payload.score);
+    if (payload.voiceStyle !== undefined) data.voiceStyle = payload.voiceStyle;
+    if (payload.serviceLabel !== undefined) data.serviceLabel = payload.serviceLabel;
+    if (payload.tags !== undefined) data.tagsJson = JSON.stringify(payload.tags);
+    if (payload.bio !== undefined) data.bio = payload.bio;
+    if (payload.cover !== undefined) data.cover = payload.cover;
+    if (payload.mobile !== undefined) data.mobile = payload.mobile;
+    if (payload.status !== undefined) data.status = payload.status;
+    return this.prisma.talent.update({ where: { id: talentId }, data });
+  }
+
+  async deleteTalent(talentId: string) {
+    const talent = await this.prisma.talent.findUnique({ where: { id: talentId } });
+    if (!talent) throw new NotFoundException('talent not found');
+    return this.prisma.talent.delete({ where: { id: talentId } });
+  }
+
   async listPartnerApplications(filters: { status?: string; keyword?: string; page?: number; pageSize?: number }) {
     const where: any = {};
     if (filters.status) where.status = filters.status;
