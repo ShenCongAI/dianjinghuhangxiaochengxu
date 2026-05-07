@@ -229,14 +229,17 @@ export class AppApiController {
     return ok(await this.dataService.grabOrder(talentId, orderNo));
   }
 
-  // Talent Orders
+  // Talent Orders (JWT-protected: talent must match talentId)
+  @UseGuards(AppJwtGuard)
   @Get('talents/:talentId/orders')
   async listTalentOrders(
+    @Req() req: RequestWithAuth,
     @Param('talentId') talentId: string,
     @Query('status') status?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
+    this.verifyTalentAccess(req, talentId);
     return ok(await this.dataService.listTalentOrders(talentId, {
       status,
       page: page ? Number(page) : undefined,
@@ -244,26 +247,43 @@ export class AppApiController {
     }));
   }
 
+  @UseGuards(AppJwtGuard)
   @Get('talents/:talentId/orders/:orderNo')
   async getTalentOrderDetail(
+    @Req() req: RequestWithAuth,
     @Param('talentId') talentId: string,
     @Param('orderNo') orderNo: string,
   ) {
+    this.verifyTalentAccess(req, talentId);
     return ok(await this.dataService.getTalentOrderDetail(talentId, orderNo));
   }
 
+  @UseGuards(AppJwtGuard)
   @Post('talents/:talentId/orders/:orderNo/complete')
   async completeTalentOrder(
+    @Req() req: RequestWithAuth,
     @Param('talentId') talentId: string,
     @Param('orderNo') orderNo: string,
   ) {
+    this.verifyTalentAccess(req, talentId);
     return ok(await this.dataService.completeTalentOrder(talentId, orderNo));
   }
 
-  // Talent profile
+  // Talent profile (JWT-protected)
+  @UseGuards(AppJwtGuard)
   @Get('talents/:talentId/profile')
-  async getTalentProfile(@Param('talentId') talentId: string) {
+  async getTalentProfile(
+    @Req() req: RequestWithAuth,
+    @Param('talentId') talentId: string,
+  ) {
+    this.verifyTalentAccess(req, talentId);
     return ok(await this.dataService.getTalentProfile(talentId));
+  }
+
+  private verifyTalentAccess(req: RequestWithAuth, talentId: string) {
+    if (req.user?.type === 'talent' && String(req.user.sub) !== talentId) {
+      throw new UnauthorizedException('无权访问其他大神的数据');
+    }
   }
 
   // Support

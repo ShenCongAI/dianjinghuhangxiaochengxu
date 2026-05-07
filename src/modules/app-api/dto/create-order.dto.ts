@@ -19,4 +19,7 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   scheduleAt?: string;
+
+  @IsOptional()
+  quantity?: number;
 }
